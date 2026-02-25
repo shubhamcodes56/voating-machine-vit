@@ -1,0 +1,32 @@
+[
+  {
+    "id": "1771959308320",
+    "option": "aditya gupta",
+    "name": "shubham patil",
+    "timestamp": "2026-02-24T18:55:08.320Z",
+    "votedAt": "25/2/2026, 12:25:08 am"
+  },
+  {
+    "id": "1771959912851",
+    "option": "aditya vartak",
+    "name": "shubham dixit",
+    "timestamp": "2026-02-24T19:05:12.852Z",
+    "votedAt": "25/2/2026, 12:35:12 am"
+  },
+  {
+    "id": "1772003638129",
+    "option": "shubham dixit",
+    "name": "25108B0073",
+    "voterId": "VID001",
+    "timestamp": "2026-02-25T07:13:58.129Z",
+    "votedAt": "25/2/2026, 12:43:58 pm"
+  },
+  {
+    "id": "1772003735313",
+    "option": "SHUBHAM DIXIT",
+    "name": "25108B0074",
+    "voterId": "VID002",
+    "timestamp": "2026-02-25T07:15:35.313Z",
+    "votedAt": "25/2/2026, 12:45:35 pm"
+  }
+]

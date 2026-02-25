@@ -1,0 +1,465 @@
+/* ============ GLOBAL STYLES ============ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary-black: #0a0e27;
+  --primary-white: #ffffff;
+  --secondary-gray: #f5f5f5;
+  --dark-gray: #2a2a2a;
+  --light-gray: #e0e0e0;
+  --accent-gray: #666666;
+  --border-color: #ddd;
+  --success-color: #4CAF50;
+  --danger-color: #f44336;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, var(--primary-black) 0%, #1a1f3a 100%);
+  color: var(--primary-black);
+}
+
+/* ============ CONTAINER ============ */
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============ ADMIN HEADER ============ */
+.admin-header {
+  background: var(--primary-white);
+  padding: 25px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 3px solid var(--primary-black);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.header-left {
+  flex: 1;
+}
+
+.admin-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-black);
+  margin-bottom: 5px;
+}
+
+.admin-subtitle {
+  font-size: 0.95rem;
+  color: var(--accent-gray);
+  font-weight: 400;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.stats-box {
+  background: #f0f0f0;
+  padding: 15px 25px;
+  border-radius: 8px;
+  text-align: center;
+  border: 2px solid var(--border-color);
+}
+
+.stats-box span {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary-black);
+  margin-bottom: 5px;
+}
+
+.stats-box small {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--accent-gray);
+}
+
+.logout-btn {
+  padding: 10px 20px;
+  background: var(--danger-color);
+  color: var(--primary-white);
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: #da190b;
+  transform: translateY(-2px);
+}
+
+/* ============ ADMIN MAIN ============ */
+.admin-main {
+  flex: 1;
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ============ SEARCH SECTION ============ */
+.search-section {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 14px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-black);
+  box-shadow: 0 0 0 3px rgba(10, 14, 39, 0.1);
+}
+
+.search-input::placeholder {
+  color: var(--accent-gray);
+}
+
+.refresh-btn {
+  padding: 14px 25px;
+  background: var(--primary-black);
+  color: var(--primary-white);
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.refresh-btn:hover {
+  background: #1a1f3a;
+  transform: translateY(-2px);
+}
+
+/* ============ VOTES SECTION ============ */
+.votes-section {
+  background: var(--primary-white);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  min-height: 400px;
+}
+
+.votes-container {
+  overflow-x: auto;
+}
+
+/* ============ VOTES TABLE ============ */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table thead {
+  background: #f9f9f9;
+  border-bottom: 2px solid var(--border-color);
+}
+
+table th {
+  padding: 15px;
+  text-align: left;
+  font-weight: 700;
+  color: var(--primary-black);
+  font-size: 0.95rem;
+}
+
+table td {
+  padding: 15px;
+  border-bottom: 1px solid var(--light-gray);
+  font-size: 0.95rem;
+}
+
+table tbody tr:hover {
+  background: #f9f9f9;
+}
+
+table tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+/* ============ ACTION BUTTONS ============ */
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.edit-btn, .delete-btn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.edit-btn {
+  background: var(--success-color);
+  color: var(--primary-white);
+}
+
+.edit-btn:hover {
+  background: #45a049;
+  transform: translateY(-2px);
+}
+
+.delete-btn {
+  background: var(--danger-color);
+  color: var(--primary-white);
+}
+
+.delete-btn:hover {
+  background: #da190b;
+  transform: translateY(-2px);
+}
+
+/* ============ MODAL ============ */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: var(--primary-white);
+  padding: 40px;
+  border-radius: 12px;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.modal-header h2 {
+  font-size: 1.5rem;
+  color: var(--primary-black);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: var(--accent-gray);
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s ease;
+}
+
+.close-btn:hover {
+  color: var(--primary-black);
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  font-weight: 600;
+  color: var(--primary-black);
+  font-size: 0.9rem;
+}
+
+.modal-input {
+  padding: 12px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: var(--primary-black);
+  box-shadow: 0 0 0 3px rgba(10, 14, 39, 0.1);
+}
+
+.save-btn {
+  padding: 12px;
+  background: var(--primary-black);
+  color: var(--primary-white);
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.save-btn:hover {
+  background: #1a1f3a;
+  transform: translateY(-2px);
+}
+
+/* ============ MESSAGES ============ */
+.message {
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 500;
+  text-align: center;
+  animation: slideIn 0.3s ease;
+}
+
+.message.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.message.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============ FOOTER ============ */
+.admin-footer {
+  background: var(--primary-white);
+  padding: 20px;
+  text-align: center;
+  border-top: 2px solid var(--dark-gray);
+  color: var(--accent-gray);
+  font-size: 0.9rem;
+}
+
+/* ============ RESPONSIVE DESIGN ============ */
+@media (max-width: 1024px) {
+  .admin-header {
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .admin-main {
+    padding: 20px;
+  }
+
+  table {
+    font-size: 0.85rem;
+  }
+
+  table th, table td {
+    padding: 10px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-title {
+    font-size: 1.5rem;
+  }
+
+  .search-section {
+    flex-direction: column;
+  }
+
+  .refresh-btn {
+    width: 100%;
+  }
+
+  table {
+    font-size: 0.75rem;
+  }
+
+  .edit-btn, .delete-btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+}

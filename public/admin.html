@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Voting Machine</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="admin-header">
+      <div class="header-left">
+        <h1 class="admin-title">Admin Dashboard</h1>
+        <p class="admin-subtitle">Manage Votes</p>
+      </div>
+      <div class="header-right">
+        <div class="stats-box">
+          <span id="totalVotesCount">0</span>
+          <small>Total Votes</small>
+        </div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <!-- Search & Filter -->
+      <section class="search-section">
+        <input 
+          type="text" 
+          id="searchBox" 
+          placeholder="Search by candidate or voter name..." 
+          class="search-input"
+        >
+        <button class="refresh-btn" onclick="loadAllVotes()">🔄 Refresh</button>
+      </section>
+
+      <!-- Votes Table -->
+      <section class="votes-section">
+        <div id="votesContainer" class="votes-container">
+          <p style="text-align: center; color: #666; padding: 40px;">Loading votes...</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="admin-footer">
+      <p>&copy; 2026 Voting Machine Admin Panel</p>
+    </footer>
+  </div>
+
+  <!-- Edit Vote Modal -->
+  <div id="editModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Edit Vote</h2>
+        <button class="close-btn" onclick="closeEditModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="input-group">
+          <label>Candidate Name</label>
+          <input 
+            type="text" 
+            id="editCandidate" 
+            placeholder="Enter candidate name" 
+            class="modal-input"
+          >
+        </div>
+        <div class="input-group">
+          <label>Roll No</label>
+          <input 
+            type="text" 
+            id="editVoter" 
+            placeholder="Enter roll no" 
+            class="modal-input"
+          >
+        </div>
+        <div class="input-group">
+          <label>Voter ID</label>
+          <input
+            type="text"
+            id="editVoterId"
+            placeholder="Enter voter ID"
+            class="modal-input"
+          >
+        </div>
+        <button class="save-btn" onclick="saveEditVote()">Save Changes</button>
+      </div>
+      <div id="editMessage" class="message" style="display: none; margin-top: 15px;"></div>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

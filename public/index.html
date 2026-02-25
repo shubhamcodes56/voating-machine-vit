@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voting Machine</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <h1 class="title">Voting Machine</h1>
+        <p class="subtitle">Cast Your Vote</p>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Voter ID Verification Section (shown first) -->
+      <section id="voterIdSection" class="voting-section">
+        <div class="form-container">
+          <h2>Verify Your Identity</h2>
+          
+          <div class="form-column">
+            <!-- Voter ID Input -->
+            <div class="input-group">
+              <label for="voterIdInput">Enter Your Voter ID</label>
+              <input 
+                type="text" 
+                id="voterIdInput" 
+                placeholder="e.g., VID001" 
+                class="text-input"
+              >
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button id="verifyBtn" class="submit-btn">Verify Voter ID</button>
+
+          <!-- Success Message -->
+          <div id="voterIdSuccessMessage" class="message success-message" style="display: none;">
+            ✓ Voter ID verified! Proceeding to voting...
+          </div>
+
+          <!-- Error Message -->
+          <div id="voterIdErrorMessage" class="message error-message" style="display: none;">
+            ✗ Invalid Voter ID or already voted
+          </div>
+        </div>
+      </section>
+
+      <!-- Voting Form Section (shown after verification) -->
+      <section id="votingSection" class="voting-section" style="display: none;">
+        <div class="form-container">
+          <h2>Vote Now</h2>
+          
+          <div class="form-column">
+            <!-- Candidate Name -->
+            <div class="input-group">
+              <label for="candidateName">Candidate Name</label>
+              <input 
+                type="text" 
+                id="candidateName" 
+                placeholder="Enter candidate name" 
+                class="text-input"
+              >
+            </div>
+
+            <!-- Roll No (instead of Your Name) -->
+            <div class="input-group">
+              <label for="rollNo">Your Roll No</label>
+              <input 
+                type="text" 
+                id="rollNo" 
+                placeholder="Enter your roll no" 
+                class="text-input"
+              >
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button id="submitBtn" class="submit-btn">Submit Vote</button>
+
+          <!-- Success Message -->
+          <div id="successMessage" class="message success-message" style="display: none;">
+            ✓ Your vote has been recorded successfully!
+          </div>
+
+          <!-- Error Message -->
+          <div id="errorMessage" class="message error-message" style="display: none;">
+            ✗ Please fill in all fields
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>&copy; 2026 Voting Machine | <a href="#" onclick="showAdminPanel(); return false;">Admin</a></p>
+    </footer>
+  </div>
+
+  <!-- Admin Panel Modal -->
+  <div id="adminModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Admin Panel</h2>
+        <button class="close-btn" onclick="closeAdminPanel()">×</button>
+      </div>
+      <div class="modal-body">
+        <input 
+          type="password" 
+          id="adminPassword" 
+          placeholder="Enter admin password" 
+          class="admin-input"
+        >
+        <button class="admin-btn" onclick="verifyAdminPassword()">Enter Admin Panel</button>
+      </div>
+      <div id="adminMessage" class="message" style="display: none; margin-top: 15px;"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
