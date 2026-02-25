@@ -31,6 +31,15 @@ window.addEventListener('DOMContentLoaded', () => {
 // ============ LOAD ALL VOTES ============
 async function loadAllVotes() {
   try {
+    // First check whether admin is configured on the server
+    const statusResp = await fetch('/api/admin-status');
+    const status = await statusResp.json();
+    if (!statusResp.ok || !status.configured) {
+      showErrorInContainer('Admin panel is not configured on this server');
+      setTimeout(() => { window.location.href = '/'; }, 2500);
+      return;
+    }
+
     const response = await fetch(`/api/all-votes?password=${encodeURIComponent(adminPassword)}`);
     const data = await response.json();
 
@@ -39,7 +48,12 @@ async function loadAllVotes() {
       totalVotesCount.textContent = data.totalVotes;
       displayVotes(allVotes);
     } else {
-      showError('Failed to load votes. Invalid session.');
+      // Handle unauthorized vs other errors
+      if (response.status === 401) {
+        showError('Failed to load votes. Invalid session.');
+      } else {
+        showError('Failed to load votes. ' + (data.message || 'Server error'));
+      }
       setTimeout(() => logout(), 2000);
     }
   } catch (error) {

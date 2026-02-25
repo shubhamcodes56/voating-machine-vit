@@ -130,6 +130,7 @@ app.post('/api/vote', (req, res) => {
       votedAt: new Date().toLocaleString()
     };
 
+
     votes.push(vote);
     saveVotes(votes);
 
@@ -164,9 +165,23 @@ app.get('/api/stats', (req, res) => {
   }
 });
 
+// API: Admin status (clients can check whether admin features are configured)
+app.get('/api/admin-status', (req, res) => {
+  try {
+    res.json({ configured: Boolean(ADMIN_PASSWORD && ADMIN_PASSWORD.length > 0) });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+});
+
 // API: Get all votes (PASSWORD PROTECTED - ADMIN ONLY)
 app.get('/api/all-votes', (req, res) => {
   try {
+    // If admin password is not configured, return 503 so clients know admin isn't available
+    if (!ADMIN_PASSWORD) {
+      return res.status(503).json({ message: 'Admin not configured on this server' });
+    }
+
     const password = req.query.password;
 
     if (!password || password !== ADMIN_PASSWORD) {
@@ -187,6 +202,10 @@ app.get('/api/all-votes', (req, res) => {
 // API: Delete a vote (PASSWORD PROTECTED - ADMIN ONLY)
 app.delete('/api/vote/:id', (req, res) => {
   try {
+    if (!ADMIN_PASSWORD) {
+      return res.status(503).json({ message: 'Admin not configured on this server' });
+    }
+
     const password = req.query.password;
 
     if (!password || password !== ADMIN_PASSWORD) {
@@ -216,6 +235,10 @@ app.delete('/api/vote/:id', (req, res) => {
 // API: Edit a vote (PASSWORD PROTECTED - ADMIN ONLY)
 app.put('/api/vote/:id', (req, res) => {
   try {
+    if (!ADMIN_PASSWORD) {
+      return res.status(503).json({ message: 'Admin not configured on this server' });
+    }
+
     const password = req.query.password;
 
     if (!password || password !== ADMIN_PASSWORD) {
