@@ -1,4 +1,9 @@
-# Configuration files with sensitive data
+node_modules/
+/.env
+config/config.js
+votes.json
+/.vscode/
+npm-debug.log# Configuration files with sensitive data
 config/config.js
 
 # Dependencies

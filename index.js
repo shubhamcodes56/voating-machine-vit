@@ -1,8 +1,24 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const { ADMIN_PASSWORD } = require('./config/config');
-const { VALID_VOTER_IDS } = require('./config/voterIds');
+// Load admin password and voter IDs safely so server can start
+// even if `config/config.js` is missing (e.g., when it's gitignored).
+let ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
+let VALID_VOTER_IDS = [];
+
+try {
+  const cfg = require('./config/config');
+  if (cfg && cfg.ADMIN_PASSWORD) ADMIN_PASSWORD = cfg.ADMIN_PASSWORD;
+} catch (err) {
+  // no config file — continue using env or empty password
+}
+
+try {
+  const v = require('./config/voterIds');
+  if (v && Array.isArray(v.VALID_VOTER_IDS)) VALID_VOTER_IDS = v.VALID_VOTER_IDS;
+} catch (err) {
+  // no voterIds file — VALID_VOTER_IDS stays empty
+}
 
 const app = express();
 const PORT = 3000;
@@ -47,8 +63,12 @@ app.post('/api/verify-voter-id', (req, res) => {
       return res.status(400).json({ message: 'Voter ID is required' });
     }
 
-    if (!VALID_VOTER_IDS.includes(voterId)) {
-      return res.status(401).json({ message: 'Invalid Voter ID' });
+    // If a list of valid voter IDs exists, enforce it. If not, allow any
+    // voterId so contributors can run the server without creating config.
+    if (Array.isArray(VALID_VOTER_IDS) && VALID_VOTER_IDS.length > 0) {
+      if (!VALID_VOTER_IDS.includes(voterId)) {
+        return res.status(401).json({ message: 'Invalid Voter ID' });
+      }
     }
 
     // Check if this voter ID has already voted
