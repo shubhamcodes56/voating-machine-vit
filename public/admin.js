@@ -12,32 +12,40 @@ let currentEditVoteId = '';
 let allVotes = [];
 
 // ============ CHECK ADMIN ACCESS ============
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   // Get password from sessionStorage
   adminPassword = sessionStorage.getItem('adminPassword');
 
   if (!adminPassword) {
-    // Redirect to main page if no password
-    window.location.href = '/';
+    console.warn('No admin session found. Redirecting...');
+    window.location.href = '/?msg=session_expired';
     return;
   }
 
-  // Load all votes
-  loadAllVotes();
+  // Load all votes immediately
+  await loadAllVotes();
 
   // Search functionality
   searchBox.addEventListener('input', filterVotes);
+  
+  // Rapid Auto-Refresh (Every 5 seconds for live feedback)
+  setInterval(loadAllVotes, 5000);
 });
 
 // ============ LOAD ALL VOTES ============
 async function loadAllVotes() {
   try {
-    // First check whether admin is configured on the server
-    const statusResp = await fetch('/api/admin-status');
+    // Check server status & connection
+    const statusResp = await fetch('/api/admin-status').catch(() => null);
+    if (!statusResp) {
+      showErrorInContainer('Server unreachable. Please check your internet connection.');
+      return;
+    }
+
     const status = await statusResp.json();
     if (!statusResp.ok || !status.configured) {
       showErrorInContainer('Admin panel is not configured on this server');
-      setTimeout(() => { window.location.href = '/'; }, 2500);
+      setTimeout(() => { window.location.href = '/'; }, 3000);
       return;
     }
 
@@ -45,22 +53,22 @@ async function loadAllVotes() {
     const data = await response.json();
 
     if (response.ok) {
-      allVotes = data.votes;
-      totalVotesCount.textContent = data.totalVotes;
+      allVotes = data.votes || [];
+      totalVotesCount.textContent = data.totalVotes || 0;
       displayVotes(allVotes);
       updateCandidateStats(allVotes);
     } else {
       // Handle unauthorized vs other errors
       if (response.status === 401) {
-        showError('Failed to load votes. Invalid session.');
+        showError('Session invalid or expired. Please login again.');
+        setTimeout(() => logout(), 1500);
       } else {
-        showError('Failed to load votes. ' + (data.message || 'Server error'));
+        showErrorInContainer('Database error: ' + (data.message || 'Unknown error'));
       }
-      setTimeout(() => logout(), 2000);
     }
   } catch (error) {
     console.error('Error:', error);
-    showErrorInContainer('Error loading votes');
+    showErrorInContainer('Error loading database. Please refresh the page.');
   }
 }
 

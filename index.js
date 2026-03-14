@@ -5,21 +5,22 @@ const fs = require('fs');
 // even if `config/config.js` is missing (e.g., when it's gitignored).
 let ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'shubham220';
 let MONITOR_PASSWORD = process.env.MONITOR_PASSWORD || 'party2026';
-let VALID_VOTER_IDS = [];
-
 try {
   const cfg = require('./config/config');
   if (cfg && cfg.ADMIN_PASSWORD) ADMIN_PASSWORD = cfg.ADMIN_PASSWORD;
   if (cfg && cfg.MONITOR_PASSWORD) MONITOR_PASSWORD = cfg.MONITOR_PASSWORD;
 } catch (err) {
-  // no config file — continue using env or default passwords
+  // no config file
 }
 
+let VALID_VOTER_IDS = new Set();
 try {
   const v = require('./config/voterIds');
-  if (v && Array.isArray(v.VALID_VOTER_IDS)) VALID_VOTER_IDS = v.VALID_VOTER_IDS;
+  if (v && Array.isArray(v.VALID_VOTER_IDS)) {
+    VALID_VOTER_IDS = new Set(v.VALID_VOTER_IDS);
+  }
 } catch (err) {
-  // no voterIds file — VALID_VOTER_IDS stays empty
+  // no voterIds file
 }
 
 const app = express();
@@ -101,9 +102,9 @@ app.post('/api/verify-voter-id', async (req, res) => {
       return res.status(400).json({ message: 'Voter ID is required' });
     }
 
-    // If a list of valid voter IDs exists, enforce it.
-    if (Array.isArray(VALID_VOTER_IDS) && VALID_VOTER_IDS.length > 0) {
-      if (!VALID_VOTER_IDS.includes(voterId)) {
+    // If a list of valid voter IDs exists, enforce it (O(1) Set lookup)
+    if (VALID_VOTER_IDS.size > 0) {
+      if (!VALID_VOTER_IDS.has(voterId)) {
         return res.status(401).json({ message: 'Invalid Voter ID: ' + voterId });
       }
     }
@@ -351,6 +352,14 @@ app.use((req, res) => {
 
 // ============ SERVER START ============
 app.listen(PORT, () => {
-  console.log(`\n🚀 Voting Machine Server running at http://localhost:${PORT}\n`);
-  console.log(`📊 Visit http://localhost:${PORT} to vote\n`);
+  console.log(`\n🚀 Voting Machine Server running at http://localhost:${PORT}`);
+  console.log(`📊 Valid Voter IDs loaded: ${VALID_VOTER_IDS.size}`);
+  
+  // Production Readiness Checks
+  if (ADMIN_PASSWORD === 'shubham220') {
+    console.warn('⚠️ WARNING: Using default ADMIN_PASSWORD. Change it for production!');
+  }
+  if (!process.env.MONGODB_URI) {
+    console.log('ℹ️ Tip: Set MONGODB_URI env var for cloud database hosting.\n');
+  }
 });
