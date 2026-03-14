@@ -36,9 +36,35 @@ const mongoose = require('mongoose');
 // Connect to MongoDB (Defaulting to localhost unless process.env.MONGODB_URI is provided)
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/voting_machine';
 
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('✅ Connected to MongoDB successfully'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
+let isConnected = false;
+const connectDB = async () => {
+  if (isConnected) {
+    return;
+  }
+  try {
+    const db = await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      socketTimeoutMS: 45000,         // Close sockets after 45s
+    });
+    isConnected = db.connections[0].readyState;
+    console.log('✅ Connected to MongoDB successfully');
+  } catch (err) {
+    console.error('❌ MongoDB connection error:', err);
+  }
+};
+
+// Middleware to ensure DB connection on API routes (crucial for Vercel serverless functions)
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path === '/api/all-votes') {
+    await connectDB();
+  }
+  next();
+});
+
+// Optionally connect immediately for local development
+if (process.env.NODE_ENV !== 'production') {
+  connectDB();
+}
 
 // Define Vote Schema and Model
 const voteSchema = new mongoose.Schema({
@@ -351,15 +377,20 @@ app.use((req, res) => {
 });
 
 // ============ SERVER START ============
-app.listen(PORT, () => {
-  console.log(`\n🚀 Voting Machine Server running at http://localhost:${PORT}`);
-  console.log(`📊 Valid Voter IDs loaded: ${VALID_VOTER_IDS.size}`);
-  
-  // Production Readiness Checks
-  if (ADMIN_PASSWORD === 'shubham220') {
-    console.warn('⚠️ WARNING: Using default ADMIN_PASSWORD. Change it for production!');
-  }
-  if (!process.env.MONGODB_URI) {
-    console.log('ℹ️ Tip: Set MONGODB_URI env var for cloud database hosting.\n');
-  }
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`\n🚀 Voting Machine Server running at http://localhost:${PORT}`);
+    console.log(`📊 Valid Voter IDs loaded: ${VALID_VOTER_IDS.size}`);
+    
+    // Production Readiness Checks
+    if (ADMIN_PASSWORD === 'shubham220') {
+      console.warn('⚠️ WARNING: Using default ADMIN_PASSWORD. Change it for production!');
+    }
+    if (!process.env.MONGODB_URI) {
+      console.log('ℹ️ Tip: Set MONGODB_URI env var for cloud database hosting.\n');
+    }
+  });
+}
+
+// Export the app for Vercel Serverless Functions
+module.exports = app;
