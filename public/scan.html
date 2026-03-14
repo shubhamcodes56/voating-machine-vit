@@ -184,14 +184,15 @@
   const warnEl  = document.getElementById('https-warn');
   const manIn   = document.getElementById('manual-in');
 
-  // ── MULTI-RESOLUTION CONFIG ────────────────────────────────────────────────
-  // We alternate between small (speed) and medium (angle/distance) every frame
-  const RES = [
-    { w: 320, h: 240 },   // Ultra-fast, close QR
-    { w: 480, h: 360 },   // Better angle / distance
-    { w: 640, h: 480 },   // Fallback for very bad angle
+  // ── MULTI-RESOLUTION & ZOOM CONFIG ────────────────────────────────────────
+  // We rotate through different strategies to catch all scenarios:
+  const STRATEGIES = [
+    { w: 320, h: 240, zoom: false, label: 'Fast' },   // Standard
+    { w: 480, h: 360, zoom: false, label: 'Wide' },   // Better angle
+    { w: 320, h: 240, zoom: true,  label: 'Zoom' },   // Digital Zoom (2x) for distance
+    { w: 640, h: 480, zoom: false, label: 'Deep' }    // High Res
   ];
-  let resIdx = 0;           // cycles through RES[] each frame
+  let stratIdx = 0;
   let frameCount = 0;
 
   let stream = null, rafId = null, done = false;
@@ -242,52 +243,58 @@
   }
   manIn.addEventListener('keypress', e => { if (e.key === 'Enter') manualSubmit(); });
 
-  // ── IMAGE PREPROCESSING: Contrast boost + Sharpen ─────────────────────────
-  // Dramatically improves detection at bad angles, in low light, or when blurry
-  // Step 1: Contrast stretch — makes the dark/light QR modules pop
-  // Step 2: 3x3 sharpen kernel — enhances edges for jsQR's finder pattern detector
+  // ── ADVANCED IMAGE PREPROCESSING ──────────────────────────────────────────
+  // Handles Distance (via Zoom) and Backlight (via Local Contrast Stretch)
   function preprocess(imageData) {
     const d = imageData.data;
     const w = imageData.width;
     const h = imageData.height;
 
-    // ── Step 1: Convert to grayscale + global contrast stretch (auto-levels) ──
+    // 1. Grayscale (fast luma)
     const gray = new Uint8Array(w * h);
-    let gMin = 255, gMax = 0;
     for (let i = 0; i < d.length; i += 4) {
-      const g = (d[i] * 77 + d[i+1] * 150 + d[i+2] * 29) >> 8; // fast luma
-      gray[i >> 2] = g;
-      if (g < gMin) gMin = g;
-      if (g > gMax) gMax = g;
-    }
-    // Stretch: map [gMin..gMax] → [0..255]
-    const range = gMax - gMin || 1;
-    for (let i = 0; i < gray.length; i++) {
-      gray[i] = ((gray[i] - gMin) * 255 / range) | 0;
+      gray[i >> 2] = (d[i] * 77 + d[i+1] * 150 + d[i+2] * 29) >> 8;
     }
 
-    // ── Step 2: Write stretched grayscale back into RGBA ──────────────────────
-    for (let i = 0; i < gray.length; i++) {
-      d[i*4]   = gray[i];
-      d[i*4+1] = gray[i];
-      d[i*4+2] = gray[i];
+    // 2. LOCAL Contrast Stretch (4x4 Grid)
+    // CRITICAL for Backlight/Windows: independent exposure for different zones
+    const GRID = 4;
+    const cw = Math.floor(w / GRID);
+    const ch = Math.floor(h / GRID);
+    
+    for (let gy = 0; gy < GRID; gy++) {
+      for (let gx = 0; gx < GRID; gx++) {
+        const xStart = gx * cw, xEnd = (gx + 1) * cw;
+        const yStart = gy * ch, yEnd = (gy + 1) * ch;
+        
+        let min = 255, max = 0;
+        for (let y = yStart; y < yEnd; y++) {
+          for (let x = xStart; x < xEnd; x++) {
+            const v = gray[y * w + x];
+            if (v < min) min = v;
+            if (v > max) max = v;
+          }
+        }
+        
+        // Map local zone to full [0..255] range
+        const range = (max - min) || 1;
+        for (let y = yStart; y < yEnd; y++) {
+          for (let x = xStart; x < xEnd; x++) {
+            const idx = y * w + x;
+            gray[idx] = ((gray[idx] - min) * 255 / range) | 0;
+          }
+        }
+      }
     }
 
-    // ── Step 3: 3×3 Sharpen convolution ───────────────────────────────────────
-    // kernel: [0,-1,0, -1,5,-1, 0,-1,0]
-    const src = new Uint8Array(gray); // copy before mutating
+    // 3. Global Sharpening (3x3 Laplacian-style)
+    const src = new Uint8Array(gray);
     for (let y = 1; y < h - 1; y++) {
       for (let x = 1; x < w - 1; x++) {
         const idx = y * w + x;
-        const sharpened = (
-          src[idx] * 5
-          - src[idx - 1] - src[idx + 1]
-          - src[idx - w] - src[idx + w]
-        );
-        const clamped = sharpened < 0 ? 0 : sharpened > 255 ? 255 : sharpened;
-        d[idx*4]   = clamped;
-        d[idx*4+1] = clamped;
-        d[idx*4+2] = clamped;
+        const val = src[idx] * 5 - src[idx-1] - src[idx+1] - src[idx-w] - src[idx+w];
+        const clamped = val < 0 ? 0 : val > 255 ? 255 : val;
+        d[idx*4] = d[idx*4+1] = d[idx*4+2] = clamped;
       }
     }
     return imageData;
@@ -307,30 +314,32 @@
       .catch(() => { if (!done) rafId = requestAnimationFrame(nativeLoop); });
   }
 
-  // ── jsQR loop — Preprocessing + Multi-resolution ──────────────────────────
-  // Rotates through 3 resolutions every frame so we catch:
-  //   1. Fast close codes (320x240)
-  //   2. Angled / mid-distance codes (480x360)
-  //   3. Distant / very angled codes (640x480)
+  // ── jsQR loop — Preprocessing + Digital Zoom Cycle ────────────────────────
   function jsqrLoop() {
     if (done) return;
     if (vid.readyState >= vid.HAVE_ENOUGH_DATA && vid.videoWidth) {
-      const res = RES[resIdx % RES.length];
-      resIdx++;
+      const strat = STRATEGIES[stratIdx % STRATEGIES.length];
+      stratIdx++;
       frameCount++;
 
-      canvas.width  = res.w;
-      canvas.height = res.h;
+      canvas.width  = strat.w;
+      canvas.height = strat.h;
 
-      // Draw video → downscaled canvas (this IS the speed trick)
-      ctx.drawImage(vid, 0, 0, res.w, res.h);
-      let img = ctx.getImageData(0, 0, res.w, res.h);
+      if (strat.zoom) {
+        // Digital Zoom: Crop middle 50% area
+        const cropW = vid.videoWidth * 0.5;
+        const cropH = vid.videoHeight * 0.5;
+        const sx = (vid.videoWidth - cropW) / 2;
+        const sy = (vid.videoHeight - cropH) / 2;
+        ctx.drawImage(vid, sx, sy, cropW, cropH, 0, 0, strat.w, strat.h);
+      } else {
+        ctx.drawImage(vid, 0, 0, strat.w, strat.h);
+      }
 
-      // Apply preprocessing (contrast + sharpen) every frame
+      let img = ctx.getImageData(0, 0, strat.w, strat.h);
       img = preprocess(img);
 
-      // Run jsQR with both normal and inversion (catches dark-on-white AND light-on-dark)
-      const code = jsQR(img.data, res.w, res.h, { inversionAttempts: 'attemptBoth' });
+      const code = jsQR(img.data, strat.w, strat.h, { inversionAttempts: 'attemptBoth' });
       if (code) { onDetected(code.data); return; }
     }
     rafId = requestAnimationFrame(jsqrLoop);
