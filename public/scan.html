@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>QR Scanner - Voting Machine</title>
-  <!-- html5-qrcode: Purpose-built for mobile camera QR scanning -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <!-- jsQR - lightweight, pure JS, works OFFLINE, no framework needed -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -17,71 +17,95 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       padding: 16px;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      top: -10%; left: -10%;
-      width: 70vw; height: 70vw;
-      background: radial-gradient(circle, rgba(37,99,235,0.22) 0%, transparent 65%);
-      filter: blur(80px);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .wrap {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      max-width: 480px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
+      padding-top: 56px;
     }
 
     h1 {
-      font-size: 1.75rem;
+      font-size: 1.5rem;
       font-weight: 900;
       background: linear-gradient(135deg, #fff 30%, #3b82f6 100%);
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
       text-align: center;
+      margin-bottom: 4px;
     }
 
-    .sub { color: #64748b; font-size: 0.85rem; text-align: center; }
-
-    /* Scanner container */
-    #reader {
-      width: 100%;
-      border-radius: 20px;
-      overflow: hidden;
-      border: 2px solid rgba(59,130,246,0.3);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.7);
-      background: #000;
+    .sub {
+      color: #64748b;
+      font-size: 0.82rem;
+      text-align: center;
+      margin-bottom: 16px;
     }
 
-    /* Override html5-qrcode internal styles */
-    #reader video {
-      border-radius: 18px !important;
-      width: 100% !important;
-    }
-
-    #reader img { display: none !important; }
-
-    /* Animating scan line overlay */
-    .scan-overlay {
+    /* Video container */
+    .cam-wrap {
       position: relative;
       width: 100%;
+      max-width: 420px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #000;
+      border: 2px solid rgba(59,130,246,0.4);
+      box-shadow: 0 0 40px rgba(59,130,246,0.2);
     }
 
-    /* Status bar */
-    .sbar {
+    #v {
       width: 100%;
+      display: block;
+      /* IMPORTANT: do NOT set height - let native aspect ratio show */
+    }
+
+    /* Corner brackets overlay */
+    .corners {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .corners::before,
+    .corners::after {
+      content: '';
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-color: #3b82f6;
+      border-style: solid;
+    }
+
+    .corners::before {
+      top: 16px; left: 16px;
+      border-width: 4px 0 0 4px;
+      border-radius: 6px 0 0 0;
+    }
+
+    .corners::after {
+      bottom: 16px; right: 16px;
+      border-width: 0 4px 4px 0;
+      border-radius: 0 0 6px 0;
+    }
+
+    /* Scan line */
+    .scan-line {
+      position: absolute;
+      left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+      animation: sweep 1.8s ease-in-out infinite;
+      pointer-events: none;
+      box-shadow: 0 0 8px #3b82f6;
+    }
+
+    @keyframes sweep {
+      0%   { top: 10%; }
+      50%  { top: 88%; }
+      100% { top: 10%; }
+    }
+
+    /* Status */
+    .sbar {
       display: flex;
       align-items: center;
       gap: 10px;
@@ -89,96 +113,99 @@
       border: 1px solid rgba(255,255,255,0.09);
       border-radius: 12px;
       padding: 12px 15px;
+      margin-top: 12px;
+      width: 100%;
+      max-width: 420px;
     }
 
     .dot {
-      width: 11px;
-      height: 11px;
+      width: 10px; height: 10px;
       border-radius: 50%;
       background: #22c55e;
-      box-shadow: 0 0 10px #22c55e;
-      animation: pulse 0.9s ease-in-out infinite;
+      box-shadow: 0 0 8px #22c55e;
       flex-shrink: 0;
+      animation: pulse 1s ease-in-out infinite;
     }
 
-    .dot.loading { background: #f59e0b; box-shadow: 0 0 10px #f59e0b; }
-    .dot.err     { background: #ef4444; box-shadow: 0 0 8px #ef4444; animation: none; }
-    .dot.ok      { background: #3b82f6; box-shadow: 0 0 16px #3b82f6; animation: none; }
+    .dot.loading { background:#f59e0b; box-shadow:0 0 8px #f59e0b; }
+    .dot.err     { background:#ef4444; box-shadow:0 0 8px #ef4444; animation:none; }
+    .dot.ok      { background:#6366f1; box-shadow:0 0 14px #6366f1; animation:none; }
 
     @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: 0.35; transform: scale(0.55); }
+      0%,100% { transform: scale(1); opacity:1; }
+      50%      { transform: scale(0.5); opacity:0.4; }
     }
 
-    #status-text { font-size: 0.83rem; color: #94a3b8; flex: 1; }
+    #stxt { font-size: 0.82rem; color: #94a3b8; flex: 1; }
+
+    /* Debug log */
+    #dbg {
+      width: 100%;
+      max-width: 420px;
+      margin-top: 8px;
+      background: rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-family: monospace;
+      font-size: 0.68rem;
+      max-height: 90px;
+      overflow-y: auto;
+      color: #475569;
+    }
 
     /* Success flash */
     #success {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(16, 185, 129, 0.15);
-      backdrop-filter: blur(8px);
+      background: rgba(16,185,129,0.18);
+      backdrop-filter: blur(10px);
       z-index: 9999;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 16px;
-      animation: fadeIn 0.15s ease;
+      gap: 12px;
+      animation: fi 0.15s ease;
     }
 
     #success.on { display: flex; }
 
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fi { from { opacity:0; } to { opacity:1; } }
 
-    .s-icon { font-size: 6rem; animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .s-icon { font-size: 5rem; animation: pop 0.35s cubic-bezier(0.34,1.56,0.64,1); }
 
-    @keyframes pop { from { transform: scale(0.1); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes pop { from { transform:scale(0.05); opacity:0; } to { transform:scale(1); opacity:1; } }
 
-    .s-title { font-size: 1.8rem; font-weight: 900; color: #4ade80; }
-    .s-sub   { color: #86efac; font-size: 0.95rem; }
+    .s-title { font-size:1.7rem; font-weight:900; color:#4ade80; }
+    .s-sub   { color:#86efac; font-size:0.9rem; }
 
-    /* Error state */
-    #start-btn {
-      padding: 12px 28px;
+    /* Retry button */
+    #retry-btn {
+      display: none;
+      margin-top: 10px;
+      padding: 11px 28px;
       background: linear-gradient(135deg, #1d4ed8, #2563eb);
       border: none;
       color: #fff;
       border-radius: 12px;
       cursor: pointer;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 700;
       font-family: inherit;
-      box-shadow: 0 4px 20px rgba(37,99,235,0.35);
     }
 
-    /* Back link */
     .back {
       position: fixed;
-      top: 14px;
-      left: 14px;
+      top: 14px; left: 14px;
       color: #64748b;
       text-decoration: none;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       padding: 6px 12px;
       border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.07);
-      background: rgba(255,255,255,0.02);
-      z-index: 10;
-    }
-
-    /* Log */
-    #log {
-      width: 100%;
-      background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-family: monospace;
-      font-size: 0.7rem;
-      max-height: 80px;
-      overflow-y: auto;
-      color: #64748b;
+      background: rgba(255,255,255,0.03);
+      z-index: 100;
     }
   </style>
 </head>
@@ -186,108 +213,180 @@
 
 <a href="/" class="back">← Home</a>
 
-<!-- Success screen -->
+<!-- Success overlay -->
 <div id="success">
   <div class="s-icon">✅</div>
-  <div class="s-title">Scanned!</div>
-  <div class="s-sub" id="s-id">Redirecting to voting...</div>
+  <div class="s-title">QR Scanned!</div>
+  <div class="s-sub" id="sid">Redirecting to voting...</div>
 </div>
 
-<div class="wrap">
-  <div>
-    <h1>📷 Show Your QR Code</h1>
-    <p class="sub">Point camera at QR code • Works in any lighting</p>
-  </div>
+<h1>📷 Show Your QR Code</h1>
+<p class="sub">Hold your QR code in front of the camera</p>
 
-  <!-- html5-qrcode renders here -->
-  <div id="reader"></div>
-
-  <div class="sbar">
-    <div class="dot loading" id="dot"></div>
-    <span id="status-text">Starting camera...</span>
-  </div>
-
-  <div id="log"></div>
+<div class="cam-wrap">
+  <video id="v" autoplay muted playsinline></video>
+  <div class="corners"></div>
+  <div class="scan-line"></div>
 </div>
+
+<!-- Hidden canvas for frame processing - NEVER shown to user -->
+<canvas id="c" style="display:none"></canvas>
+
+<div class="sbar">
+  <div class="dot loading" id="dot"></div>
+  <span id="stxt">Starting camera…</span>
+</div>
+
+<button id="retry-btn" onclick="boot()">🔄 Retry Camera</button>
+
+<div id="dbg"></div>
 
 <script>
-  const dotEl      = document.getElementById('dot');
-  const statusEl   = document.getElementById('status-text');
-  const logEl      = document.getElementById('log');
-  const successDiv = document.getElementById('success');
-  const sIdEl      = document.getElementById('s-id');
-  let   done       = false;
+  // ─── DOM refs ──────────────────────────────────────────────────────────────
+  const vid     = document.getElementById('v');
+  const canvas  = document.getElementById('c');
+  const ctx     = canvas.getContext('2d', { willReadFrequently: true });
+  const dot     = document.getElementById('dot');
+  const stxt    = document.getElementById('stxt');
+  const dbg     = document.getElementById('dbg');
+  const success = document.getElementById('success');
+  const sidEl   = document.getElementById('sid');
+  const retryBtn= document.getElementById('retry-btn');
 
-  function addLog(msg, color) {
-    const d = document.createElement('div');
-    d.style.color = color || '#64748b';
-    d.textContent = new Date().toLocaleTimeString('en', { hour12: false }) + ' ' + msg;
-    logEl.appendChild(d);
-    logEl.scrollTop = logEl.scrollHeight;
-    while (logEl.children.length > 20) logEl.removeChild(logEl.firstChild);
+  let stream    = null;
+  let rafId     = null;
+  let done      = false;
+  let loopCount = 0;
+
+  // ─── Logging ───────────────────────────────────────────────────────────────
+  function log(msg, color) {
+    const el = document.createElement('div');
+    el.style.color = color || '#475569';
+    const t = new Date().toLocaleTimeString('en', { hour12: false });
+    el.textContent = t + ' ' + msg;
+    dbg.appendChild(el);
+    dbg.scrollTop = dbg.scrollHeight;
+    if (dbg.children.length > 30) dbg.removeChild(dbg.firstChild);
   }
 
-  function setStatus(cls, txt) {
-    dotEl.className = 'dot ' + cls;
-    statusEl.textContent = txt;
+  function setStatus(cls, msg) {
+    dot.className  = 'dot ' + (cls || '');
+    stxt.textContent = msg;
   }
 
-  function onScanSuccess(rawValue) {
+  // ─── Redirect handler ──────────────────────────────────────────────────────
+  function onDetected(rawText) {
     if (done) return;
     done = true;
 
-    // Extract voter ID
-    let vid = rawValue.trim();
-    const m = rawValue.match(/voter[\s_-]?id[:\s]+([^\s,]+)/i)
-           || rawValue.match(/VID[:\s]([^\s,]+)/i);
-    if (m) vid = m[1].trim();
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    if (stream) stream.getTracks().forEach(t => t.stop());
 
-    addLog('✅ GOT: ' + vid, '#4ade80');
-    sIdEl.textContent = 'Voter ID: ' + vid;
-    successDiv.classList.add('on');
-    setStatus('ok', 'Redirecting...');
+    // QR codes from qr.js contain only the voter ID (e.g. "VID001")
+    const vid_str = rawText.trim().toUpperCase();
 
-    // Stop scanner
-    try { scanner.stop(); } catch(e) {}
+    log('✅ DETECTED: ' + vid_str, '#4ade80');
+    setStatus('ok', 'Scanned! Redirecting…');
+    sidEl.textContent = 'Voter ID: ' + vid_str;
+    success.classList.add('on');
 
-    // Immediate redirect
     setTimeout(() => {
-      window.location.href = '/?vid=' + encodeURIComponent(vid);
-    }, 120);
+      window.location.href = '/?vid=' + encodeURIComponent(vid_str);
+    }, 150);
   }
 
-  function onScanError(err) {
-    // Only log real errors, not "not found" which happens every frame
-    if (err && !err.includes('NotFoundException') && !err.includes('No MultiFormat')) {
-      addLog('⚠ ' + err, '#fbbf24');
+  // ─── Core scan loop ────────────────────────────────────────────────────────
+  function scanFrame() {
+    if (done) return;
+
+    if (vid.readyState >= vid.HAVE_ENOUGH_DATA && vid.videoWidth > 0) {
+      canvas.width  = vid.videoWidth;
+      canvas.height = vid.videoHeight;
+      ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      // jsQR: tries to find a QR in every frame
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: 'dontInvert'   // fastest: only normal (dark on light)
+      });
+
+      if (code) {
+        onDetected(code.data);
+        return;
+      }
+
+      // Every 3rd frame, also try inverted (light on dark QR)
+      if (loopCount % 3 === 0) {
+        const code2 = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: 'onlyInvert'
+        });
+        if (code2) { onDetected(code2.data); return; }
+      }
+
+      loopCount++;
+    }
+
+    rafId = requestAnimationFrame(scanFrame);
+  }
+
+  // ─── Camera start ──────────────────────────────────────────────────────────
+  async function boot() {
+    done = false;
+    retryBtn.style.display = 'none';
+    setStatus('loading', 'Requesting camera…');
+    log('📷 Requesting camera…');
+
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    if (rafId)  { cancelAnimationFrame(rafId); rafId = null; }
+
+    // Check jsQR loaded
+    if (typeof jsQR === 'undefined') {
+      setStatus('err', 'jsQR library failed to load. Check internet.');
+      log('❌ jsQR not loaded', '#fca5a5');
+      retryBtn.style.display = 'inline-block';
+      return;
+    }
+
+    try {
+      // Ideal constraints — browser will fall back gracefully
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: 'environment' },
+          width:  { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
+
+      vid.srcObject = stream;
+      await vid.play();
+
+      const track = stream.getVideoTracks()[0];
+      const s = track.getSettings();
+      log(`✅ Camera: ${s.width}×${s.height} ${s.facingMode || ''}`, '#93c5fd');
+      setStatus('', '🔍 Scanning — hold QR steady, fill the frame');
+
+      // Small pause to let camera focus then start scanning
+      setTimeout(() => { rafId = requestAnimationFrame(scanFrame); }, 400);
+
+    } catch (err) {
+      log('❌ Camera error: ' + err.message, '#fca5a5');
+
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setStatus('err', 'Camera permission denied — enable in browser settings');
+      } else if (err.name === 'NotFoundError') {
+        setStatus('err', 'No camera found on this device');
+      } else {
+        setStatus('err', 'Camera error: ' + err.message);
+      }
+      retryBtn.style.display = 'inline-block';
     }
   }
 
-  // Create scanner
-  const scanner = new Html5Qrcode('reader', { verbose: false });
-
-  const config = {
-    fps: 30,                      // 30 scans per second
-    qrbox: { width: 280, height: 280 }, // scan region
-    aspectRatio: 1.0,
-    disableFlip: false,           // scan mirrored codes too
-    experimentalFeatures: {
-      useBarCodeDetectorIfSupported: true // use native API if browser supports it
-    }
-  };
-
-  scanner.start(
-    { facingMode: 'environment' },   // use back camera
-    config,
-    onScanSuccess,
-    onScanError
-  ).then(() => {
-    addLog('📹 Camera ready — point at QR code', '#93c5fd');
-    setStatus('', '🔍 Scanning — hold QR code steady');
-  }).catch(err => {
-    addLog('❌ ' + err, '#fca5a5');
-    setStatus('err', 'Camera error — check permissions');
-  });
+  // ─── Auto-start ────────────────────────────────────────────────────────────
+  boot();
 </script>
+
 </body>
 </html>
