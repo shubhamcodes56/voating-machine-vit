@@ -11,9 +11,31 @@ const votingSection = document.getElementById('votingSection');
 const adminModal = document.getElementById('adminModal');
 const adminPassword = document.getElementById('adminPassword');
 const adminMessage = document.getElementById('adminMessage');
+const monitorModal = document.getElementById('monitorModal');
+const monitorPasswordInput = document.getElementById('monitorPassword');
+const monitorMessage = document.getElementById('monitorMessage');
 
 // ============ GLOBAL VARIABLES ============
 let verifiedVoterId = '';
+
+// ============ AUTO-FILL FROM QR SCANNER (kiosk mode) ============
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const vid = params.get('vid'); // URLSearchParams.get() already decodes — no decodeURIComponent needed
+  if (vid) {
+    console.log('[QR Redirect] Voter ID received from scanner:', vid);
+    const input = document.getElementById('voterIdInput');
+    input.value = vid; // already decoded by URLSearchParams
+    input.style.boxShadow = '0 0 0 3px rgba(34, 197, 94, 0.45)';
+    setTimeout(() => { input.style.boxShadow = ''; }, 1200);
+    // Auto-trigger verification
+    setTimeout(() => {
+      console.log('[QR Redirect] Auto-triggering verifyVoterId() with:', vid);
+      verifyVoterId();
+    }, 200);
+    history.replaceState({}, '', '/');
+  }
+});
 
 // ============ RIPPLE EFFECT HELPER ============
 function addRipple(btn, e) {
@@ -57,6 +79,10 @@ submitBtn.addEventListener('click', (e) => {
 
 adminPassword.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') verifyAdminPassword();
+});
+
+monitorPasswordInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') verifyMonitorPassword();
 });
 
 // ============ VERIFY VOTER ID ============
@@ -121,11 +147,12 @@ function showVoterIdError(message) {
 
 // ============ SUBMIT VOTE ============
 async function submitVote() {
-  const candidateName = document.getElementById('candidateName').value.trim();
+  const selectedCandidate = document.querySelector('input[name="candidateName"]:checked');
+  const candidateName = selectedCandidate ? selectedCandidate.value.trim() : '';
   const rollNo = document.getElementById('rollNo').value.trim();
 
   if (!candidateName || !rollNo) {
-    showError('Please fill in all fields');
+    showError('Please fill in all fields (Select a candidate and enter Roll No)');
     return;
   }
 
@@ -269,9 +296,231 @@ function showAdminError(message) {
   });
 }
 
+// ============ MONITORING PANEL AUTHENTICATION ============
+function showMonitorPanel() {
+  monitorModal.style.display = 'flex';
+  monitorPasswordInput.value = '';
+  monitorMessage.style.display = 'none';
+  requestAnimationFrame(() => monitorPasswordInput.focus());
+}
+
+function closeMonitorPanel() {
+  const content = monitorModal.querySelector('.modal-content');
+  content.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+  content.style.transform = 'translateY(30px) scale(0.95)';
+  content.style.opacity = '0';
+  setTimeout(() => {
+    monitorModal.style.display = 'none';
+    content.style.transform = '';
+    content.style.opacity = '';
+    content.style.transition = '';
+    monitorPasswordInput.value = '';
+    monitorMessage.style.display = 'none';
+  }, 300);
+}
+
+async function verifyMonitorPassword() {
+  const password = monitorPasswordInput.value;
+
+  if (!password) {
+    showMonitorError('Please enter the monitoring password');
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/all-votes?password=${encodeURIComponent(password)}`);
+    const data = await response.json();
+
+    if (response.ok) {
+      sessionStorage.setItem('monitorPassword', password);
+      monitorMessage.textContent = '✓ Password verified! Redirecting...';
+      monitorMessage.style.display = 'flex';
+      monitorMessage.className = 'message success';
+      monitorMessage.style.color = '#155724';
+      monitorMessage.style.background = 'linear-gradient(135deg, #d4edda, #c3f4d5)';
+      monitorMessage.style.border = '1px solid #c3e6cb';
+      monitorMessage.style.padding = '15px';
+      monitorMessage.style.borderRadius = '10px';
+
+      setTimeout(() => {
+        window.location.href = '/monitor.html';
+      }, 1000);
+    } else {
+      showMonitorError(data.message || 'Invalid password');
+    }
+  } catch (error) {
+    showMonitorError('Error verifying password');
+    console.error('Error:', error);
+  }
+}
+
+function showMonitorError(message) {
+  monitorMessage.innerHTML = '✗ ' + message;
+  monitorMessage.style.display = 'flex';
+  monitorMessage.style.color = '#721c24';
+  monitorMessage.style.background = 'linear-gradient(135deg, #f8d7da, #fde0e3)';
+  monitorMessage.style.border = '1px solid #f5c6cb';
+  monitorMessage.style.padding = '15px';
+  monitorMessage.style.borderRadius = '10px';
+  monitorMessage.style.animation = 'none';
+  requestAnimationFrame(() => {
+    monitorMessage.style.animation = 'bounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both, shake 0.4s ease 0.1s both';
+  });
+}
+
 // ============ CLOSE MODALS ON OUTSIDE CLICK ============
 window.addEventListener('click', (e) => {
   if (e.target === adminModal) {
     closeAdminPanel();
   }
+  if (e.target === monitorModal) {
+    closeMonitorPanel();
+  }
+  if (e.target === document.getElementById('qrScannerModal')) {
+    closeQRScanner();
+  }
 });
+
+// ============ QR CODE SCANNER ============
+let html5QrScanner = null;
+
+function openQRScanner() {
+  const modal = document.getElementById('qrScannerModal');
+  modal.style.display = 'flex';
+  document.getElementById('qrScanStatus').textContent = 'Starting camera...';
+  startCameraScanner();
+}
+
+function startCameraScanner() {
+  if (html5QrScanner) {
+    html5QrScanner.stop().catch(() => {}).finally(() => {
+      html5QrScanner.clear();
+      html5QrScanner = null;
+      initCamera();
+    });
+  } else {
+    initCamera();
+  }
+}
+
+function initCamera() {
+  html5QrScanner = new Html5Qrcode('qrScannerPreview');
+
+  Html5Qrcode.getCameras().then(cameras => {
+    if (!cameras || cameras.length === 0) {
+      showUploadFallback('No camera found. Upload your QR image instead.');
+      return;
+    }
+
+    // Prefer back camera, otherwise use first available
+    const cam = cameras.find(c => c.label.toLowerCase().includes('back')) || cameras[0];
+
+    html5QrScanner.start(
+      { deviceId: { exact: cam.id } },
+      { fps: 10, qrbox: { width: 240, height: 240 } },
+      (decodedText) => handleQRScan(decodedText),
+      () => { /* Suppress frame scan errors */ }
+    ).then(() => {
+      document.getElementById('qrScanStatus').textContent = '🔍 Scanning... Hold your QR code steady.';
+    }).catch(err => {
+      showUploadFallback('Camera unavailable. Upload your QR image instead.');
+    });
+  }).catch(err => {
+    showUploadFallback('Camera access denied. Upload your QR image instead.');
+  });
+}
+
+function showUploadFallback(message) {
+  // Stop camera if running
+  if (html5QrScanner) {
+    html5QrScanner.stop().catch(() => {});
+  }
+
+  const statusEl = document.getElementById('qrScanStatus');
+  statusEl.innerHTML = `
+    <div style="color:#fbbf24; margin-bottom:12px; font-size:0.9rem;">⚠️ ${message}</div>
+    <label for="qrFileUpload" style="
+      display:inline-block; padding:12px 24px; border-radius:10px;
+      background:linear-gradient(135deg,rgba(37,99,235,0.25),rgba(59,130,246,0.1));
+      border:1px solid rgba(59,130,246,0.4); color:#93c5fd;
+      font-size:0.95rem; font-weight:700; cursor:pointer;
+      transition:all 0.3s ease; font-family:var(--font-body);">
+      📁 Upload QR Image
+    </label>
+    <input type="file" id="qrFileUpload" accept="image/*"
+      style="display:none;" onchange="scanUploadedQR(event)">
+    <div style="color:#64748b; font-size:0.8rem; margin-top:8px;">
+      Upload the QR image you downloaded from "My QR" page
+    </div>
+  `;
+  // Clear the preview
+  document.getElementById('qrScannerPreview').innerHTML = '';
+}
+
+function scanUploadedQR(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('qrScanStatus');
+  statusEl.innerHTML = '<span style="color:#93c5fd;">🔄 Reading QR code...</span>';
+
+  const scanner = new Html5Qrcode('qrScannerPreview');
+  scanner.scanFile(file, true)
+    .then(decodedText => {
+      scanner.clear();
+      handleQRScan(decodedText);
+    })
+    .catch(err => {
+      scanner.clear();
+      statusEl.innerHTML = `
+        <div style="color:#fca5a5; margin-bottom:12px;">❌ Could not read QR code from image. Make sure it's the correct QR file.</div>
+        <label for="qrFileUpload" style="
+          display:inline-block; padding:12px 24px; border-radius:10px;
+          background:linear-gradient(135deg,rgba(37,99,235,0.25),rgba(59,130,246,0.1));
+          border:1px solid rgba(59,130,246,0.4); color:#93c5fd;
+          font-size:0.95rem; font-weight:700; cursor:pointer;
+          font-family:var(--font-body);">
+          📁 Try Another Image
+        </label>
+        <input type="file" id="qrFileUpload" accept="image/*"
+          style="display:none;" onchange="scanUploadedQR(event)">
+      `;
+    });
+}
+
+function handleQRScan(decodedText) {
+  let voterId = '';
+  const lines = decodedText.split('\n');
+  for (const line of lines) {
+    const match = line.match(/^Voter ID:\s*(.+)$/i);
+    if (match) { voterId = match[1].trim(); break; }
+  }
+
+  if (!voterId) {
+    document.getElementById('qrScanStatus').textContent = '⚠️ QR code not recognized. Use your official Voting Machine QR.';
+    return;
+  }
+
+  closeQRScanner();
+  document.getElementById('voterIdInput').value = voterId;
+
+  // Green flash on the input field
+  const input = document.getElementById('voterIdInput');
+  input.style.transition = 'box-shadow 0.3s ease';
+  input.style.boxShadow = '0 0 0 3px rgba(34, 197, 94, 0.4)';
+  setTimeout(() => { input.style.boxShadow = ''; }, 1500);
+
+  // Auto-trigger verification
+  setTimeout(() => verifyVoterId(), 600);
+}
+
+function closeQRScanner() {
+  document.getElementById('qrScannerModal').style.display = 'none';
+  if (html5QrScanner) {
+    html5QrScanner.stop().catch(() => {}).finally(() => {
+      html5QrScanner.clear();
+      html5QrScanner = null;
+    });
+  }
+}
+

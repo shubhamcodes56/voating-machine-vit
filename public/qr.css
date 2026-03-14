@@ -1,0 +1,424 @@
+/* ============ QR CODE PAGE STYLES ============ */
+
+.qr-main {
+    flex: 1;
+    padding: 48px 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* ---- Hero Section ---- */
+.qr-hero {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeSlideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.qr-hero-badge {
+    display: inline-block;
+    background: rgba(37, 99, 235, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: var(--accent-sky);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 100px;
+    margin-bottom: 20px;
+}
+
+.qr-hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    background: linear-gradient(135deg, #FFFFFF 30%, var(--accent-sky) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 16px;
+    line-height: 1.1;
+}
+
+.qr-hero-sub {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.7;
+}
+
+/* ---- Glass Card ---- */
+.glass-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ---- Layout ---- */
+.qr-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-bottom: 48px;
+    align-items: start;
+}
+
+/* ---- Form Card ---- */
+.qr-form-card {
+    padding: 40px;
+    animation: fadeSlideUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+.qr-form-header {
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.form-icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.qr-form-header h2 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.qr-form-header p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.input-group {
+    margin-bottom: 24px;
+}
+
+.input-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.input-wrapper:focus-within {
+    border-color: var(--accent-sky);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.input-icon {
+    font-size: 1.1rem;
+    padding: 0 14px;
+    color: var(--text-muted, #64748b);
+}
+
+.qr-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 1rem;
+    padding: 14px 16px 14px 0;
+    font-family: var(--font-body);
+}
+
+.qr-input::placeholder {
+    color: #475569;
+}
+
+/* ---- Error Message ---- */
+.qr-message {
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 20px;
+}
+
+.qr-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+}
+
+/* ---- Generate Button ---- */
+.qr-generate-btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent-blue) 0%, #1d4ed8 100%);
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--font-body);
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.qr-generate-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.qr-generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(37, 99, 235, 0.5);
+}
+
+.qr-generate-btn:hover::before {
+    opacity: 1;
+}
+
+.qr-generate-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ---- QR Result Card ---- */
+.qr-result-card {
+    padding: 40px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    animation: qrCardAppear 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes qrCardAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.qr-result-header {
+    margin-bottom: 28px;
+}
+
+.qr-result-header h2 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.qr-result-header p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.qr-canvas-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 28px;
+}
+
+.qr-canvas-wrapper canvas {
+    border-radius: 16px;
+    display: block;
+    position: relative;
+    z-index: 1;
+}
+
+.qr-glow-ring {
+    position: absolute;
+    inset: -8px;
+    border-radius: 24px;
+    background: transparent;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    box-shadow: 0 0 30px rgba(56, 189, 248, 0.2), inset 0 0 30px rgba(56, 189, 248, 0.05);
+    animation: glowPulse 3s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes glowPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.15), inset 0 0 20px rgba(56, 189, 248, 0.03);
+    }
+
+    50% {
+        box-shadow: 0 0 50px rgba(56, 189, 248, 0.35), inset 0 0 30px rgba(56, 189, 248, 0.08);
+    }
+}
+
+/* ---- Student Badge ---- */
+.qr-student-badge {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.badge-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.badge-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.badge-value {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* ---- Action Buttons ---- */
+.qr-actions {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.qr-download-btn,
+.qr-reset-btn {
+    flex: 1;
+    padding: 13px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: var(--font-body);
+}
+
+.qr-download-btn {
+    background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+    border: none;
+    color: white;
+}
+
+.qr-download-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(13, 148, 136, 0.4);
+}
+
+.qr-reset-btn {
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+}
+
+.qr-reset-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ---- Info Section ---- */
+.qr-info-section {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    animation: fadeSlideUp 1s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+
+.info-card {
+    padding: 28px 24px;
+    text-align: center;
+}
+
+.info-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 14px;
+}
+
+.info-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.info-card p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+/* ---- Animations ---- */
+@keyframes fadeSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+    .qr-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .qr-info-section {
+        grid-template-columns: 1fr;
+    }
+
+    .qr-form-card,
+    .qr-result-card {
+        padding: 28px 20px;
+    }
+}

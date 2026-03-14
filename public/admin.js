@@ -4,6 +4,7 @@ const editMessage = document.getElementById('editMessage');
 const searchBox = document.getElementById('searchBox');
 const votesContainer = document.getElementById('votesContainer');
 const totalVotesCount = document.getElementById('totalVotesCount');
+const candidateStatsGrid = document.getElementById('candidateStatsGrid');
 
 // ============ GLOBAL VARIABLES ============
 let adminPassword = '';
@@ -14,7 +15,7 @@ let allVotes = [];
 window.addEventListener('DOMContentLoaded', () => {
   // Get password from sessionStorage
   adminPassword = sessionStorage.getItem('adminPassword');
-  
+
   if (!adminPassword) {
     // Redirect to main page if no password
     window.location.href = '/';
@@ -47,6 +48,7 @@ async function loadAllVotes() {
       allVotes = data.votes;
       totalVotesCount.textContent = data.totalVotes;
       displayVotes(allVotes);
+      updateCandidateStats(allVotes);
     } else {
       // Handle unauthorized vs other errors
       if (response.status === 401) {
@@ -98,11 +100,50 @@ function displayVotes(votes) {
   votesContainer.innerHTML = html;
 }
 
+// ============ UPDATE CANDIDATE STATS ============
+function updateCandidateStats(votes) {
+  if (!candidateStatsGrid) return;
+
+  const stats = {};
+  votes.forEach(vote => {
+    const candidate = vote.option;
+    stats[candidate] = (stats[candidate] || 0) + 1;
+  });
+
+  // Sort candidates by vote count (descending)
+  const sortedCandidates = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+
+  let html = '';
+  sortedCandidates.forEach(([name, count]) => {
+    html += `
+      <div class="candidate-stat-card">
+        <div class="stat-card-glow"></div>
+        <div class="candidate-avatar">
+          <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2563EB&color=fff" alt="${name}">
+        </div>
+        <div class="stat-info">
+          <h3>${escapeHtml(name)}</h3>
+          <div class="vote-count-badge">
+            <span class="count">${count}</span>
+            <span class="label">Votes</span>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  if (html === '') {
+    candidateStatsGrid.innerHTML = '<p style="color: var(--text-secondary); grid-column: 1/-1; text-align: center;">No data available</p>';
+  } else {
+    candidateStatsGrid.innerHTML = html;
+  }
+}
+
 // ============ FILTER VOTES BY SEARCH ============
 function filterVotes() {
   const searchTerm = searchBox.value.toLowerCase();
-  const filtered = allVotes.filter(vote => 
-    vote.option.toLowerCase().includes(searchTerm) || 
+  const filtered = allVotes.filter(vote =>
+    vote.option.toLowerCase().includes(searchTerm) ||
     vote.name.toLowerCase().includes(searchTerm) ||
     (vote.voterId || '').toLowerCase().includes(searchTerm)
   );
@@ -143,9 +184,9 @@ async function saveEditVote() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-          option: candidate,
-          name: voter,
-          voterId: voterId
+        option: candidate,
+        name: voter,
+        voterId: voterId
       })
     });
 
