@@ -64,7 +64,7 @@ app.use(async (req, res, next) => {
       await connectDB();
     } catch (err) {
       return res.status(503).json({
-        message: 'Database connection failed. Check your MONGODB_URI environment variable in Vercel.'
+        message: 'Database connection failed. Error: ' + err.message
       });
     }
   }
