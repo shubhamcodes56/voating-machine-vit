@@ -44,4 +44,20 @@
             }
         });
     }, 500);
+
+    // Hardware Kickstart: Sometimes drivers get "stuck" in a BUSY state.
+    // Requesting and immediately closing can "reset" the driver flag.
+    async function kickstart() {
+        try {
+            console.log("[Terminator] Hardware Kickstart: Resetting driver flags...");
+            const s = await navigator.mediaDevices.getUserMedia({ video: true });
+            s.getTracks().forEach(t => t.stop());
+            console.log("[Terminator] Hardware Kickstart: SUCCESS (Driver Released)");
+        } catch(e) {
+            console.warn("[Terminator] Hardware Kickstart: Failed or Already Clean", e.name);
+        }
+    }
+    
+    // Run kickstart 1.5s after load to ensure the previous page transition is done
+    setTimeout(kickstart, 1500);
 })();

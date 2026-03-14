@@ -260,21 +260,35 @@
     // Check if the QR code is a URL (like the Admin or Monitor auto-login URLs)
     if (text.toLowerCase().startsWith('http://') || text.toLowerCase().startsWith('https://')) {
         log('✅ URL detected', '#4ade80');
-        setStatus('ready', 'Scanned URL! Redirecting…');
-        sidEl.textContent = 'Redirecting securely...';
+        setStatus('ready', 'Code Verified! Closing Camera...');
+        sidEl.textContent = 'Redirecting to Panel...';
         success.classList.add('on');
-        // Use replace() to remove scanner from history, preventing "Back" button locks
-        setTimeout(() => { window.location.replace(text); }, 500);
+        
+        // AGGRESSIVE TRACK KILL
+        if (stream) {
+            stream.getTracks().forEach(t => { t.stop(); t.enabled = false; });
+            stream = null;
+        }
+        vid.srcObject = null;
+
+        // Give the OS 1 FULL SECOND to release hardware before we trigger the navigate
+        setTimeout(() => { window.location.replace(text); }, 1000);
         return;
     }
 
     const vid_str = normalize(text);
     log('✅ ' + vid_str + ' in ' + elapsed + 'ms', '#4ade80');
-    setStatus('ready', 'Scanned in ' + elapsed + 'ms! Redirecting…');
+    setStatus('ready', 'Code Verified! Closing Camera...');
     sidEl.textContent = 'Voter ID: ' + vid_str;
     success.classList.add('on');
-    // Use replace() to remove scanner from history, preventing "Back" button locks
-    setTimeout(() => { window.location.replace('/?vid=' + encodeURIComponent(vid_str)); }, 500);
+
+    if (stream) {
+        stream.getTracks().forEach(t => { t.stop(); t.enabled = false; });
+        stream = null;
+    }
+    vid.srcObject = null;
+
+    setTimeout(() => { window.location.replace('/?vid=' + encodeURIComponent(vid_str)); }, 1000);
   }
 
   function manualSubmit() {
@@ -505,16 +519,33 @@
 
   window.addEventListener('beforeunload', cleanup);
   window.addEventListener('unload', cleanup);
+  window.addEventListener('blur', cleanup); // Kill hardware when loss of focus
+  
+  // Also kill hardware when the user switches tabs or backgrounds the browser
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        log('📱 Tab backgrounded. Releasing hardware...', '#94a3b8');
+        cleanup();
+    }
+  });
 
   function cleanup() {
     if (stream) {
       log('🛑 Hardware release triggered...', '#fca5a5');
       stream.getTracks().forEach(t => {
-          t.stop();
-          t.enabled = false;
+          try {
+            t.stop();
+            t.enabled = false;
+          } catch(e) {}
       });
+      if (vid) {
+        vid.srcObject = null;
+        vid.pause();
+      }
       stream = null;
     }
+    // Set a flag so if we come back, we know we need to reset the UI
+    sessionStorage.setItem('didCleanup', 'true');
   }
 
   // DO NOT boot automatically - wait for user click

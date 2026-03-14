@@ -35,6 +35,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 200);
   }
 
+  // FORCE FRESH START ON KIOSK SCAN LINKS
+  document.querySelectorAll('a[href="scan.html"]').forEach(link => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = 'scan.html?t=' + Date.now();
+    });
+  });
+
   // Check voting MODE first (is session open?) then status (is voting paused?)
   checkVotingMode();
   checkVotingStatus();
