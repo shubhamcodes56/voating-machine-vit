@@ -13,19 +13,42 @@ let allVotes = [];
 
 // ============ CHECK ADMIN ACCESS ============
 window.addEventListener('DOMContentLoaded', async () => {
-  // Get password from sessionStorage
   adminPassword = sessionStorage.getItem('adminPassword');
 
   if (!adminPassword) {
-    // If opened via QR code (?qr=admin), show inline login overlay
     const params = new URLSearchParams(window.location.search);
-    if (params.get('qr') === 'admin') {
+    const autoToken = params.get('autotoken');
+
+    if (autoToken) {
+      // Auto-login from QR code — decode the token and validate
+      try {
+        const decoded = atob(autoToken);
+        const resp = await fetch('/api/votes', {
+          headers: { 'x-admin-password': decoded }
+        });
+        if (resp.ok) {
+          sessionStorage.setItem('adminPassword', decoded);
+          adminPassword = decoded;
+          // Remove the token from URL (clean URL) then continue loading
+          const cleanUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, cleanUrl);
+        } else {
+          // Token invalid — redirect to home
+          window.location.href = '/?msg=invalid_qr';
+          return;
+        }
+      } catch (e) {
+        window.location.href = '/?msg=invalid_qr';
+        return;
+      }
+    } else if (params.get('qr') === 'admin') {
       showAdminLoginOverlay();
+      return;
     } else {
       console.warn('No admin session found. Redirecting...');
       window.location.href = '/?msg=session_expired';
+      return;
     }
-    return;
   }
 
   // Load all votes and check voting mode on startup

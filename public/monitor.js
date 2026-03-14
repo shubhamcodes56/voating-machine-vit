@@ -12,21 +12,41 @@ let allVotes = [];
 
 // ============ CHECK MONITOR ACCESS ============
 window.addEventListener('DOMContentLoaded', async () => {
-    // Get password from sessionStorage
     monitorPassword = sessionStorage.getItem('monitorPassword');
 
     if (!monitorPassword) {
         const params = new URLSearchParams(window.location.search);
-        if (params.get('qr') === 'monitor') {
+        const autoToken = params.get('autotoken');
+
+        if (autoToken) {
+            try {
+                const decoded = atob(autoToken);
+                const resp = await fetch('/api/votes', {
+                    headers: { 'x-monitor-password': decoded }
+                });
+                if (resp.ok) {
+                    sessionStorage.setItem('monitorPassword', decoded);
+                    monitorPassword = decoded;
+                    const cleanUrl = window.location.pathname;
+                    window.history.replaceState({}, document.title, cleanUrl);
+                } else {
+                    window.location.href = '/?msg=invalid_qr';
+                    return;
+                }
+            } catch (e) {
+                window.location.href = '/?msg=invalid_qr';
+                return;
+            }
+        } else if (params.get('qr') === 'monitor') {
             showMonitorLoginOverlay();
+            return;
         } else {
             console.warn('No monitoring session found. Redirecting...');
             window.location.href = '/?msg=session_expired';
+            return;
         }
-        return;
     }
-
-    // Load all votes immediately
+// Load all votes immediately
     await loadAllVotes();
 
     // Check voting status

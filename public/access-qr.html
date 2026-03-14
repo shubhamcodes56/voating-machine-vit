@@ -191,7 +191,22 @@
       <div class="aq-hero">
         <div class="aq-badge">🔑 Admin Only</div>
         <h1 class="aq-title">Staff Access QR Codes</h1>
-        <p class="aq-sub">Print or save these QR codes. Each code only opens the intended panel — they are not interchangeable.</p>
+        <p class="aq-sub">Scanning these QR codes will take you directly into the panel — no password needed.</p>
+      </div>
+
+      <!-- Monitor password input + Generate button -->
+      <div style="text-align:center; margin-bottom: 32px;">
+        <div style="display:inline-block; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:24px 32px;">
+          <label style="display:block; color:#94a3b8; font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Enter Monitor Password to Generate QR Codes</label>
+          <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:center;">
+            <input id="monitorPwdInput" type="password" placeholder="Monitor password…" onkeydown="if(event.key==='Enter') generateQRCodes()"
+              style="padding:12px 18px; border-radius:10px; border:1px solid rgba(245,158,11,0.4); background:rgba(255,255,255,0.06); color:#fff; font-size:1rem; font-family:'Outfit',sans-serif; outline:none; min-width:220px;">
+            <button id="generateBtn" onclick="generateQRCodes()"
+              style="padding:12px 24px; border-radius:10px; background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; font-weight:700; font-size:0.95rem; border:none; cursor:pointer; font-family:'Outfit',sans-serif;">
+              🔄 Generate QR Codes
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="aq-grid">
@@ -241,26 +256,39 @@
 
   <script>
     // ============ AUTH GUARD ============
-    // This page requires an active admin session to view
     const adminPassword = sessionStorage.getItem('adminPassword');
 
     if (!adminPassword) {
       document.getElementById('authGuard').style.display = 'block';
     } else {
       document.getElementById('mainContent').style.display = '';
-      generateQRCodes();
+      // Don't auto-generate yet — wait for monitor password input
     }
 
     // ============ GENERATE QR CODES ============
     function generateQRCodes() {
+      const monitorPwd = document.getElementById('monitorPwdInput').value.trim();
+      if (!monitorPwd) {
+        alert('Please enter the monitor password to generate both QR codes.');
+        document.getElementById('monitorPwdInput').focus();
+        return;
+      }
+
       const base = window.location.origin;
 
-      // Use direct .html paths with ?qr= marker so panels auto-open their login
-      const adminUrl   = base + '/admin.html?qr=admin';
-      const monitorUrl = base + '/monitor.html?qr=monitor';
+      // Encode passwords as base64 tokens → auto-login on scan
+      const adminToken   = btoa(adminPassword);
+      const monitorToken = btoa(monitorPwd);
 
-      document.getElementById('adminUrlDisplay').textContent   = adminUrl;
-      document.getElementById('monitorUrlDisplay').textContent = monitorUrl;
+      const adminUrl   = base + '/admin.html?autotoken=' + adminToken;
+      const monitorUrl = base + '/monitor.html?autotoken=' + monitorToken;
+
+      document.getElementById('adminUrlDisplay').textContent   = base + '/admin.html (auto-login)';
+      document.getElementById('monitorUrlDisplay').textContent = base + '/monitor.html (auto-login)';
+
+      // Clear any existing QRs
+      document.getElementById('adminQR').innerHTML   = '';
+      document.getElementById('monitorQR').innerHTML = '';
 
       // Admin QR — blue tint
       new QRCode(document.getElementById('adminQR'), {
@@ -281,6 +309,9 @@
         colorLight: '#ffffff',
         correctLevel: QRCode.CorrectLevel.H
       });
+
+      document.getElementById('generateBtn').textContent = '✅ QR Codes Generated!';
+      setTimeout(() => { document.getElementById('generateBtn').textContent = '🔄 Regenerate QR Codes'; }, 3000);
     }
 
     // ============ DOWNLOAD QR ============
@@ -289,26 +320,23 @@
       const canvas = container.querySelector('canvas');
       const img    = container.querySelector('img');
 
-      // Create output canvas with label
       const out = document.createElement('canvas');
       const SIZE = 280;
       out.width  = SIZE;
       out.height = SIZE + 60;
       const ctx = out.getContext('2d');
 
-      // White background
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, out.width, out.height);
 
       const draw = (src) => {
         ctx.drawImage(src, 30, 15, SIZE - 60, SIZE - 60);
 
-        // Label
         ctx.fillStyle = '#0f172a';
         ctx.font = 'bold 16px Outfit, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(
-          filename.replace('_', ' ').replace('_QR', ''),
+          filename.replace(/_/g, ' ').replace(' QR', ''),
           out.width / 2,
           SIZE - 30
         );
@@ -335,6 +363,8 @@
         tempImg.crossOrigin = 'anonymous';
         tempImg.onload = () => draw(tempImg);
         tempImg.src = img.src;
+      } else {
+        alert('Please generate the QR codes first.');
       }
     }
   </script>
