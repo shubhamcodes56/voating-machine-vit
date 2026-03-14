@@ -81,12 +81,13 @@ app.get('/scan.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'scan.html'));
 });
 
-// Normalize voter ID: accept "001" (from new ultra-simple QR) or "VID001" (full format)
+// Normalize voter ID: accept "0001" (from ultra-simple QR) or "VID0001" / "VID5000" (full format)
+// Supports up to VID5000 (4-digit numeric part)
 function normalizeVoterId(id) {
   if (!id) return id;
   const s = id.toString().trim().toUpperCase();
-  // If purely numeric, prepend VID prefix
-  if (/^\d+$/.test(s)) return 'VID' + s.padStart(3, '0');
+  // If purely numeric, prepend VID with 4-digit padding
+  if (/^\d+$/.test(s)) return 'VID' + s.padStart(4, '0');
   return s;
 }
 

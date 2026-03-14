@@ -20,10 +20,10 @@ function generateQR() {
   qrInstance = null;
 
   try {
-    // ULTRA-SIMPLE: encode ONLY the numeric part, e.g. "001" from "VID001"
-    // 3 digits = QR Version 1 (21x21 grid) = MAXIMUM square size = EASIEST to scan from distance
+    // ULTRA-SIMPLE: encode ONLY the numeric part, e.g. "0001" from "VID0001" or "5000" from "VID5000"
+    // Up to 4 digits = QR Version 1 (21x21 grid) = MAXIMUM square size = EASIEST to scan from distance
     // ECC Level L = least error-correction overhead = biggest data squares
-    const numericPart = voterId.replace(/[^0-9]/g, '').padStart(3, '0') || voterId;
+    const numericPart = voterId.replace(/[^0-9]/g, '').padStart(4, '0') || voterId;
 
     qrInstance = new QRCode(container, {
       text:         numericPart, // e.g. "001" — ultra short!

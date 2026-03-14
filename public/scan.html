@@ -211,10 +211,10 @@
     stxt.textContent = msg;
   }
 
-  // Normalize: '001' → 'VID001', 'VID001' → 'VID001'
+  // Normalize: '0001'→'VID0001', '5000'→'VID5000', 'VID5000'→'VID5000'
   function normalize(raw) {
     let s = raw.trim().toUpperCase().replace(/^["']+|["']+$/g, '');
-    if (/^\d+$/.test(s)) s = 'VID' + s.padStart(3, '0');
+    if (/^\d+$/.test(s)) s = 'VID' + s.padStart(4, '0');
     return s;
   }
 
