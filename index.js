@@ -34,7 +34,7 @@ app.use(express.urlencoded({ extended: true }));
 const mongoose = require('mongoose');
 
 // Connect to MongoDB (Defaulting to localhost unless process.env.MONGODB_URI is provided)
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/voting_machine';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/voting_machine';
 
 // Proper connection caching for Vercel serverless: use Mongoose's readyState
 // readyState: 0=disconnected, 1=connected, 2=connecting, 3=disconnecting
@@ -60,11 +60,13 @@ const connectDB = async () => {
 // Middleware: ensure DB is connected for all /api routes, return 503 on failure
 app.use(async (req, res, next) => {
   if (req.path.startsWith('/api')) {
+    console.log(`📡 [API Request]: ${req.method} ${req.path}`);
     try {
       await connectDB();
     } catch (err) {
+      console.error('❌ DB connection failed in middleware:', err.message);
       return res.status(503).json({
-        message: 'Database connection failed. Check your MONGODB_URI environment variable in Vercel.'
+        error: 'Database connection failed. Check your MONGODB_URI.'
       });
     }
   }
@@ -83,8 +85,11 @@ const Candidate = mongoose.model('Candidate', candidateSchema);
 // Initial Candidates Seeding
 async function seedCandidates() {
     try {
+        console.log("🔄 Ensuring DB connection for seeding...");
+        await connectDB();
         const count = await Candidate.countDocuments();
         if (count === 0) {
+            console.log("🌱 Database empty. Seeding initial candidates...");
             const initialCandidates = [
                 {
                     name: "Alice Smith",
@@ -113,9 +118,11 @@ async function seedCandidates() {
             ];
             await Candidate.insertMany(initialCandidates);
             console.log("✅ Seeded initial candidates");
+        } else {
+            console.log(`📊 Candidates already exist (${count}). Skipping seed.`);
         }
     } catch (err) {
-        console.error("❌ Seeding error:", err);
+        console.error("❌ Seeding error:", err.message);
     }
 }
 seedCandidates();
@@ -260,7 +267,7 @@ app.post('/api/verify-voter-id', async (req, res) => {
     });
   } catch (error) {
     console.error('Verify error:', error);
-    res.status(500).json({ message: 'Server error: ' + error.message });
+    res.status(500).json({ error: 'Server error: ' + error.message });
   }
 });
 
@@ -308,13 +315,13 @@ app.post('/api/vote', async (req, res) => {
     // Handle specific MongoDB Duplicate Key Error
     if (error.code === 11000) {
       if (error.keyValue.name) {
-        return res.status(409).json({ message: 'A vote from this Roll No has already been recorded' });
+        return res.status(409).json({ error: 'A vote from this Roll No has already been recorded' });
       } else if (error.keyValue.voterId) {
-        return res.status(409).json({ message: 'A vote from this Voter ID has already been recorded' });
+        return res.status(409).json({ error: 'A vote from this Voter ID has already been recorded' });
       }
     }
     console.error('Vote error:', error);
-    res.status(500).json({ message: 'Server error: ' + error.message });
+    res.status(500).json({ error: 'Server error: ' + error.message });
   }
 });
 
@@ -472,10 +479,10 @@ app.put('/api/vote/:id', async (req, res) => {
 
   } catch (error) {
     if (error.code === 11000) {
-      return res.status(409).json({ message: 'Another vote with this Roll No or Voter ID already exists' });
+      return res.status(409).json({ error: 'Another vote with this Roll No or Voter ID already exists' });
     }
     console.error('Update vote error:', error);
-    res.status(500).json({ message: 'Server error: ' + error.message });
+    res.status(500).json({ error: 'Server error: ' + error.message });
   }
 });
 

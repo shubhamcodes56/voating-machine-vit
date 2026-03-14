@@ -254,7 +254,9 @@ async function verifyVoterId() {
           voterIdSection.style.display = 'none';
           votingSection.style.display = 'block';
           votingSection.classList.add('section-enter');
-          document.getElementById('candidateName').focus();
+          // Focus on rollNo since candidateName is a group of radios
+          const rollNoInput = document.getElementById('rollNo');
+          if (rollNoInput) rollNoInput.focus();
         }, 400);
       }, 1200);
     } else {
@@ -289,7 +291,8 @@ async function loadCandidates() {
     if (resp.ok) {
       renderCandidatesList(candidates);
     } else {
-      container.innerHTML = `<div style="color: #fca5a5; padding: 20px; text-align: center;">Error: ${candidates.error || 'Failed to load'}</div>`;
+      const errorMsg = candidates.error || candidates.message || 'Failed to load';
+      container.innerHTML = `<div style="color: #fca5a5; padding: 20px; text-align: center;">Error: ${errorMsg}</div>`;
     }
   } catch (err) {
     container.innerHTML = `<div style="color: #fca5a5; padding: 20px; text-align: center;">Network Error: Failed to load candidates</div>`;
@@ -299,20 +302,29 @@ async function loadCandidates() {
 function renderCandidatesList(candidates) {
   const container = document.getElementById('candidateListContainer');
   if (!candidates || candidates.length === 0) {
-    container.innerHTML = '<div style="color: #64748b; padding: 20px; text-align: center;">No candidates currently registered.</div>';
+    container.innerHTML = '<div style="grid-column: 1/-1; color: #64748b; padding: 40px; text-align: center;">No candidates currently registered.</div>';
     return;
   }
 
-  container.innerHTML = candidates.map((cand, idx) => `
-    <label class="radio-card">
-      <input type="radio" name="candidateName" value="${escapeHtml(cand.name)}">
-      <div class="candidate-info">
-        <img src="${cand.photo}" alt="${escapeHtml(cand.name)}" class="candidate-img" 
-             onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(cand.name)}&background=4F46E5&color=fff'">
-        <span class="candidate-name">${escapeHtml(cand.name)}</span>
-        <span class="candidate-party" style="font-size: 0.75rem; color: #94A3B8; margin-top: 2px;">${escapeHtml(cand.party)}</span>
+  container.innerHTML = candidates.map((c, i) => `
+    <label class="cand-card-label">
+      <input type="radio" name="candidateName" value="${escapeHtml(c.name)}">
+      <div class="cand-card" style="animation-delay: ${i * 0.1}s; height: 100%;">
+        <div class="selection-indicator"></div>
+        <span class="cand-number">#${i + 1}</span>
+        <div class="cand-photo-wrap">
+          <img class="cand-photo" src="${c.photo}" alt="${escapeHtml(c.name)}" 
+               onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=334155&color=fff&size=200&bold=true'">
+          <div class="cand-photo-glow"></div>
+        </div>
+        <div class="cand-name">${escapeHtml(c.name)}</div>
+        <div class="cand-party">${escapeHtml(c.party)}</div>
+        <div class="cand-divider"></div>
+        <div class="cand-agenda-title">Key Agenda</div>
+        <ul class="cand-agenda-list">
+          ${(c.agenda || []).map(a => `<li>${escapeHtml(a)}</li>`).join('')}
+        </ul>
       </div>
-      <span class="radio-custom"></span>
     </label>
   `).join('');
 }

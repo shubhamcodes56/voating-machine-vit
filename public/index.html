@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Voting Machine</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="candidates.css">
   <script src="terminator.js"></script>
   <!-- QR Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -93,16 +94,16 @@
         </section>
 
         <!-- Voting Form Section (shown after verification) -->
-        <section id="votingSection" class="voting-section" style="display: none;">
-          <div class="form-container">
+        <section id="votingSection" class="voting-section" style="display: none; max-width: 1000px;">
+          <div class="form-container" style="max-width: 100%; width: 100%;">
             <h2>Vote Now</h2>
 
             <div class="form-column">
               <!-- Candidate Selection -->
               <div class="input-group">
                 <label>Select Candidate</label>
-                <div class="radio-group" id="candidateListContainer">
-                  <div class="loading-candidates" style="color: var(--text-secondary); padding: 20px; text-align: center;">
+                <div class="cand-grid" id="candidateListContainer">
+                  <div class="loading-candidates" style="grid-column: 1/-1; color: var(--text-secondary); padding: 40px; text-align: center;">
                     Loading candidates...
                   </div>
                 </div>

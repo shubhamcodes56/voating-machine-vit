@@ -262,3 +262,63 @@
   .cand-grid  { grid-template-columns: 1fr; gap: 20px; }
   .cand-card  { padding: 28px 20px 24px; }
 }
+
+/* selection styles for voting */
+.cand-card-label {
+  display: block;
+  cursor: pointer;
+  height: 100%;
+}
+
+.cand-card-label input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.cand-card-label:has(input:checked) .cand-card {
+  border-color: #fbbf24;
+  background: rgba(245, 158, 11, 0.08);
+  box-shadow: 0 0 30px rgba(251, 191, 36, 0.25);
+  transform: translateY(-4px) scale(1.02);
+}
+
+.cand-card-label:has(input:checked) .cand-photo {
+  border-color: #fbbf24;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+}
+
+.selection-indicator {
+  position: absolute;
+  top: 16px;
+  left: 20px;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.cand-card-label:has(input:checked) .selection-indicator {
+  border-color: #fbbf24;
+  background: #fbbf24;
+}
+
+.selection-indicator::after {
+  content: '✓';
+  color: #000;
+  font-size: 12px;
+  font-weight: 900;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cand-card-label:has(input:checked) .selection-indicator::after {
+  opacity: 1;
+  transform: scale(1);
+}
