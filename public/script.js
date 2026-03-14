@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('[QR Redirect] Auto-triggering verifyVoterId() with:', vid);
       verifyVoterId();
     }, 200);
+  }
   // Check voting status immediately and then every 3 seconds
   checkVotingStatus();
   setInterval(checkVotingStatus, 3000);
