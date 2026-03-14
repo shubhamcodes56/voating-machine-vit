@@ -40,6 +40,20 @@
                 </div>
             </header>
 
+            <!-- Voting Control Section -->
+            <section class="control-section">
+                <div class="control-card">
+                    <div class="control-info">
+                        <h3>Voting Control</h3>
+                        <p>Status: <span id="votingStatusLabel" class="status-badge live">Live</span></p>
+                    </div>
+                    <div class="control-actions">
+                        <button id="stopVotingBtn" class="action-btn stop" onclick="toggleVoting(false)">🛑 Stop Voting</button>
+                        <button id="startVotingBtn" class="action-btn start" onclick="toggleVoting(true)" style="display: none;">▶️ Start Voting</button>
+                    </div>
+                </div>
+            </section>
+
             <!-- Main Content -->
             <main class="admin-main">
                 <!-- Search & Filter -->

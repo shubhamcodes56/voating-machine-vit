@@ -35,7 +35,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 200);
     history.replaceState({}, '', '/');
   }
+
+  // Check voting status
+  checkVotingStatus();
 });
+
+// ============ CHECK VOTING STATUS ============
+let isVotingActive = true;
+
+async function checkVotingStatus() {
+  try {
+    const response = await fetch('/api/voting-status');
+    const data = await response.json();
+    isVotingActive = data.isVotingActive;
+
+    if (!isVotingActive) {
+      showVotingPausedMessage();
+    }
+  } catch (err) {
+    console.error('Error checking voting status:', err);
+  }
+}
+
+function showVotingPausedMessage() {
+  const overlay = document.createElement('div');
+  overlay.id = 'votingPausedOverlay';
+  overlay.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(4, 9, 26, 0.9);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: white; font-family: 'Outfit', sans-serif; text-align: center; padding: 20px;
+  `;
+  overlay.innerHTML = `
+    <h1 style="font-size: 3rem; margin-bottom: 1rem; color: #F43F5E;">Voting Paused</h1>
+    <p style="font-size: 1.2rem; color: #94A3B8; max-width: 500px;">
+      The voting process has been temporarily halted by the administrator. 
+      Please wait for it to be resumed or contact the election committee.
+    </p>
+    <div style="margin-top: 2rem; padding: 20px; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; background: rgba(255,255,255,0.03);">
+      <p style="font-size: 0.9rem; color: #64748b;">This page will automatically refresh when voting resumes.</p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  // Poll for status to resume
+  const pollInterval = setInterval(async () => {
+    try {
+      const resp = await fetch('/api/voting-status');
+      const d = await resp.json();
+      if (d.isVotingActive) {
+        clearInterval(pollInterval);
+        location.reload();
+      }
+    } catch (e) {}
+  }, 5000);
+}
 
 // ============ RIPPLE EFFECT HELPER ============
 function addRipple(btn, e) {
@@ -88,6 +144,11 @@ monitorPasswordInput.addEventListener('keypress', (e) => {
 // ============ VERIFY VOTER ID ============
 async function verifyVoterId() {
   const voterId = voterIdInput.value.trim();
+
+  if (!isVotingActive) {
+    showError('Voting is currently paused. Please wait.');
+    return;
+  }
 
   if (!voterId) {
     showVoterIdError('Please enter your Voter ID');
@@ -150,6 +211,11 @@ async function submitVote() {
   const selectedCandidate = document.querySelector('input[name="candidateName"]:checked');
   const candidateName = selectedCandidate ? selectedCandidate.value.trim() : '';
   const rollNo = document.getElementById('rollNo').value.trim();
+
+  if (!isVotingActive) {
+    showError('Voting is currently paused. Vote cannot be submitted.');
+    return;
+  }
 
   if (!candidateName || !rollNo) {
     showError('Please fill in all fields (Select a candidate and enter Roll No)');

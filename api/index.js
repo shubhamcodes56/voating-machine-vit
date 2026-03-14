@@ -92,6 +92,37 @@ const voteSchema = new mongoose.Schema({
 
 const Vote = mongoose.model('Vote', voteSchema);
 
+// Define Settings Schema for global application state
+const settingsSchema = new mongoose.Schema({
+  key: { type: String, required: true, unique: true },
+  value: mongoose.Schema.Types.Mixed
+});
+
+const Settings = mongoose.model('Settings', settingsSchema);
+
+// Helper to get or initialize a setting
+const getSetting = async (key, defaultValue) => {
+  try {
+    let setting = await Settings.findOne({ key });
+    if (!setting) {
+      setting = await Settings.create({ key, value: defaultValue });
+    }
+    return setting.value;
+  } catch (err) {
+    console.error(`Error getting setting ${key}:`, err);
+    return defaultValue;
+  }
+};
+
+// Helper to update a setting
+const updateSetting = async (key, value) => {
+  try {
+    await Settings.findOneAndUpdate({ key }, { value }, { upsert: true });
+  } catch (err) {
+    console.error(`Error updating setting ${key}:`, err);
+  }
+};
+
 // ============ ROUTES ============
 
 // Admin - Send admin dashboard
@@ -126,6 +157,36 @@ function normalizeVoterId(id) {
   if (/^\d+$/.test(s)) return 'VID' + s.padStart(4, '0');
   return s;
 }
+
+// API: Get voting status
+app.get('/api/voting-status', async (req, res) => {
+  try {
+    const isVotingActive = await getSetting('isVotingActive', true);
+    res.json({ isVotingActive });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+});
+
+// API: Toggle voting status (Admin/Monitor only)
+app.post('/api/toggle-voting', async (req, res) => {
+  try {
+    const password = req.body.password || req.query.password;
+    if (!password || (password !== ADMIN_PASSWORD && password !== MONITOR_PASSWORD)) {
+      return res.status(401).json({ message: 'Unauthorized! Invalid password' });
+    }
+
+    const { active } = req.body;
+    if (typeof active !== 'boolean') {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    await updateSetting('isVotingActive', active);
+    res.json({ success: true, isVotingActive: active });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+});
 
 // API: Verify Voter ID
 app.post('/api/verify-voter-id', async (req, res) => {
@@ -165,6 +226,12 @@ app.post('/api/verify-voter-id', async (req, res) => {
 // API: Submit a vote
 app.post('/api/vote', async (req, res) => {
   try {
+    // Check if voting is active before proceeding
+    const isVotingActive = await getSetting('isVotingActive', true);
+    if (!isVotingActive) {
+      return res.status(403).json({ message: 'Voting is currently stopped by the administrator.' });
+    }
+
     const { option, name } = req.body;
     const voterId = normalizeVoterId(req.body.voterId);
 

@@ -20,6 +20,10 @@
   --text-primary: #FFFFFF;
   --text-secondary: #94A3B8;
 
+  /* Status Colors */
+  --status-live: #10B981;
+  --status-stopped: #F43F5E;
+
   /* Typography */
   --font-display: 'Outfit', sans-serif;
   --font-body: 'Inter', sans-serif;
@@ -346,6 +350,98 @@ body::after {
   display: flex;
   align-items: center;
   gap: 24px;
+}
+
+/* ============ VOTING CONTROL ============ */
+.control-section {
+  margin: 0 32px 32px 32px;
+  animation: fadeInUp 0.7s ease 0.15s both;
+}
+
+.control-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 24px 32px;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.control-info h3 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  margin-bottom: 4px;
+}
+
+.control-info p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.live {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--status-live);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-badge.stopped {
+  background: rgba(244, 63, 94, 0.1);
+  color: var(--status-stopped);
+  border: 1px solid rgba(244, 63, 94, 0.2);
+}
+
+.action-btn {
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-btn.stop {
+  background: rgba(244, 63, 94, 0.1);
+  color: var(--status-stopped);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+}
+
+.action-btn.stop:hover {
+  background: var(--status-stopped);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(244, 63, 94, 0.4);
+}
+
+.action-btn.start {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--status-live);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.action-btn.start:hover {
+  background: var(--status-live);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
 }
 
 .stats-box {
