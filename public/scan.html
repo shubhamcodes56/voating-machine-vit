@@ -175,7 +175,8 @@
 <script>
   const vid     = document.getElementById('v');
   const canvas  = document.getElementById('c');
-  const ctx     = canvas.getContext('2d', { willReadFrequently: true });
+  // willReadFrequently = GPU → CPU optimized path
+  const ctx     = canvas.getContext('2d', { willReadFrequently: true, alpha: false });
   const dot     = document.getElementById('dot');
   const stxt    = document.getElementById('stxt');
   const dbg     = document.getElementById('dbg');
@@ -184,11 +185,18 @@
   const warnEl  = document.getElementById('https-warn');
   const manIn   = document.getElementById('manual-in');
 
-  let stream = null, rafId = null, done = false, frame = 0;
-  const hasNative = typeof BarcodeDetector !== 'undefined';
-  let nativeDetector = null;
+  // ── SPEED CONFIG ──────────────────────────────────────────────────────────
+  // Downscale resolution for jsQR: fewer pixels = MUCH faster decode
+  // 320x240 = 76,800 pixels vs 1280x720 = 921,600 pixels (12x faster!)
+  const SCAN_W = 320, SCAN_H = 240;
+  canvas.width  = SCAN_W;
+  canvas.height = SCAN_H;
 
-  // ── Logging ────────────────────────────────────────────────────────────────
+  let stream = null, rafId = null, done = false;
+  const hasNative = typeof BarcodeDetector !== 'undefined';
+  let   nativeDetector = null;
+  let   scanStart = 0;
+
   function log(msg, color) {
     const el = document.createElement('div');
     el.style.color = color || '#475569';
@@ -199,40 +207,32 @@
   }
 
   function setStatus(cls, msg) {
-    dot.className = 'dot ' + (cls || '');
+    dot.className  = 'dot ' + (cls || '');
     stxt.textContent = msg;
   }
 
-  // ── Normalize voter ID ─────────────────────────────────────────────────────
-  // QR encodes "001" (ultra-short). Scanner prepends "VID" to get "VID001".
-  // Also accepts full "VID001" directly (from older QR codes).
+  // Normalize: '001' → 'VID001', 'VID001' → 'VID001'
   function normalize(raw) {
-    let s = raw.trim().toUpperCase();
-    // If it's purely numeric or "001" style → prepend VID
-    if (/^\d+$/.test(s)) {
-      s = 'VID' + s.padStart(3, '0');
-    }
-    // Remove any surrounding quotes
-    s = s.replace(/^["']+|["']+$/g, '');
+    let s = raw.trim().toUpperCase().replace(/^["']+|["']+$/g, '');
+    if (/^\d+$/.test(s)) s = 'VID' + s.padStart(3, '0');
     return s;
   }
 
-  // ── Redirect ───────────────────────────────────────────────────────────────
+  // ── Detected! ─────────────────────────────────────────────────────────────
   function onDetected(rawText) {
     if (done) return;
     done = true;
+    const elapsed = Date.now() - scanStart;
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
     if (stream) stream.getTracks().forEach(t => t.stop());
-
     const vid_str = normalize(rawText);
-    log('✅ ' + rawText + ' → ' + vid_str, '#4ade80');
-    setStatus('ready', 'Redirecting…');
+    log('✅ ' + vid_str + ' in ' + elapsed + 'ms', '#4ade80');
+    setStatus('ready', 'Scanned in ' + elapsed + 'ms! Redirecting…');
     sidEl.textContent = 'Voter ID: ' + vid_str;
     success.classList.add('on');
-    setTimeout(() => { window.location.href = '/?vid=' + encodeURIComponent(vid_str); }, 150);
+    setTimeout(() => { window.location.href = '/?vid=' + encodeURIComponent(vid_str); }, 100);
   }
 
-  // ── Manual entry ───────────────────────────────────────────────────────────
   function manualSubmit() {
     const val = manIn.value.trim();
     if (!val) { manIn.focus(); return; }
@@ -240,108 +240,86 @@
   }
   manIn.addEventListener('keypress', e => { if (e.key === 'Enter') manualSubmit(); });
 
-  // ── Native BarcodeDetector scan (fastest on Android Chrome) ────────────────
-  async function nativeScan() {
+  // ── Native BarcodeDetector — DIRECT VIDEO, no canvas, hardware-accelerated ─
+  // This is the fastest possible path on Chrome Android (sub-100ms)
+  function nativeLoop() {
     if (done) return;
-    if (vid.readyState < vid.HAVE_ENOUGH_DATA || vid.videoWidth === 0) {
-      rafId = requestAnimationFrame(nativeScan);
-      return;
+    if (vid.readyState < vid.HAVE_ENOUGH_DATA || !vid.videoWidth) {
+      rafId = requestAnimationFrame(nativeLoop); return;
     }
-    try {
-      const codes = await nativeDetector.detect(vid);
-      if (codes.length > 0) { onDetected(codes[0].rawValue); return; }
-    } catch(e) { /* ignore */ }
-    rafId = requestAnimationFrame(nativeScan);
+    nativeDetector.detect(vid)
+      .then(codes => {
+        if (codes.length) { onDetected(codes[0].rawValue); return; }
+        if (!done) rafId = requestAnimationFrame(nativeLoop);
+      })
+      .catch(() => { if (!done) rafId = requestAnimationFrame(nativeLoop); });
   }
 
-  // ── jsQR scan loop (all browsers fallback) ─────────────────────────────────
-  function jsqrScan() {
+  // ── jsQR loop — downscaled canvas for maximum throughput ──────────────────
+  // Drawing 1280x720 video into 320x240 canvas = 12x less work for jsQR
+  function jsqrLoop() {
     if (done) return;
-    if (vid.readyState >= vid.HAVE_ENOUGH_DATA && vid.videoWidth > 0) {
-      const W = vid.videoWidth, H = vid.videoHeight;
-      canvas.width = W; canvas.height = H;
-      ctx.drawImage(vid, 0, 0, W, H);
-      const img = ctx.getImageData(0, 0, W, H);
-
-      // Try normal orientation
-      let code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' });
+    if (vid.readyState >= vid.HAVE_ENOUGH_DATA && vid.videoWidth) {
+      // Draw video scaled DOWN into small canvas — this is the key speed trick
+      ctx.drawImage(vid, 0, 0, SCAN_W, SCAN_H);
+      const img  = ctx.getImageData(0, 0, SCAN_W, SCAN_H);
+      const code = jsQR(img.data, SCAN_W, SCAN_H, { inversionAttempts: 'attemptBoth' });
       if (code) { onDetected(code.data); return; }
     }
-    rafId = requestAnimationFrame(jsqrScan);
+    rafId = requestAnimationFrame(jsqrLoop);
   }
 
   // ── Boot ───────────────────────────────────────────────────────────────────
   async function boot() {
     done = false;
     setStatus('spin', 'Starting camera…');
-    log('🔍 Engine: ' + (hasNative ? 'Native BarcodeDetector ✅' : 'jsQR'));
 
-    // Show HTTPS warning if camera will likely be blocked
-    const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    if (!isSecure) {
-      warnEl.style.display = 'block';
-      log('⚠️ Not HTTPS — camera may be blocked on mobile', '#fca5a5');
-    }
+    const isSecure = location.protocol === 'https:'
+      || location.hostname === 'localhost'
+      || location.hostname === '127.0.0.1';
+    if (!isSecure) warnEl.style.display = 'block';
 
-    // Init native detector if available
     if (hasNative) {
       try {
         nativeDetector = new BarcodeDetector({ formats: ['qr_code'] });
-        log('✅ Native BarcodeDetector ready');
-      } catch(e) {
-        log('⚠ Native init failed: ' + e.message, '#fbbf24');
-      }
+        log('✅ Native BarcodeDetector (fastest)', '#86efac');
+      } catch(e) { log('⚠ Native unavailable', '#fbbf24'); }
     }
+    if (!hasNative) log('📦 jsQR engine @320×240 (fast)', '#93c5fd');
 
-    // Check jsQR loaded
     if (typeof jsQR === 'undefined') {
-      log('❌ jsQR not loaded — CDN issue?', '#fca5a5');
-      setStatus('err', 'Library load failed — check internet');
+      setStatus('err', 'jsQR failed to load — check internet');
       return;
-    } else {
-      log('✅ jsQR ready');
     }
 
     try {
       if (stream) stream.getTracks().forEach(t => t.stop());
-
       stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode:  { ideal: 'environment' },
-          width:       { ideal: 1280 },
-          height:      { ideal: 720 }
-        },
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false
       });
-
       vid.srcObject = stream;
       await vid.play();
 
       const s = stream.getVideoTracks()[0].getSettings();
-      log(`📷 ${s.width}×${s.height} ${s.facingMode||''}`, '#93c5fd');
-      setStatus('', '🔍 Scanning — show QR code');
+      log(`📷 ${s.width}×${s.height}`, '#93c5fd');
+      setStatus('', '⚡ Scanning…');
 
-      // Slight pause for camera to focus
-      setTimeout(() => {
-        if (nativeDetector) {
-          log('▶️ Using Native scanner');
-          rafId = requestAnimationFrame(nativeScan);
-        } else {
-          log('▶️ Using jsQR scanner');
-          rafId = requestAnimationFrame(jsqrScan);
-        }
-      }, 300);
+      // ── START SCANNING IMMEDIATELY — no delay! ──────────────────────────
+      scanStart = Date.now();
+      if (nativeDetector) {
+        log('▶ Native scan started', '#86efac');
+        rafId = requestAnimationFrame(nativeLoop);
+      } else {
+        log('▶ jsQR scan started @320×240', '#93c5fd');
+        rafId = requestAnimationFrame(jsqrLoop);
+      }
 
     } catch (err) {
       log('❌ ' + err.name + ': ' + err.message, '#fca5a5');
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setStatus('err', 'Camera permission denied');
-        log('👉 Use the manual entry below to vote without camera', '#fbbf24');
-        if (!isSecure) {
-          warnEl.style.display = 'block';
-        }
-      } else if (err.name === 'NotFoundError') {
-        setStatus('err', 'No camera found on this device');
+      if (err.name === 'NotAllowedError') {
+        setStatus('err', 'Camera denied — use manual entry below');
+        if (!isSecure) warnEl.style.display = 'block';
       } else {
         setStatus('err', err.message);
       }
