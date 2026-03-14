@@ -141,12 +141,15 @@ app.get('/qr.html', (req, res) => {
 });
 
 // Kiosk QR Scanner
-app.get('/scan', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public', 'scan.html'));
-});
+app.get('/scan', (req, res) => res.redirect('/scan.html'));
 app.get('/scan.html', (req, res) => {
   res.sendFile(path.join(__dirname, '../public', 'scan.html'));
 });
+
+// Aliases for Mobile/Convenience
+app.get('/admin', (req, res) => res.redirect('/admin.html'));
+app.get('/monitor', (req, res) => res.redirect('/monitor.html'));
+app.get('/monitoring', (req, res) => res.redirect('/monitor.html'));
 
 // Normalize voter ID: accept "0001" (from ultra-simple QR) or "VID0001" / "VID5000" (full format)
 // Supports up to VID5000 (4-digit numeric part)

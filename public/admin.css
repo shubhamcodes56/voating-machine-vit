@@ -237,6 +237,8 @@ body::after {
   border-radius: 10px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .nav-link:hover {
@@ -408,14 +410,16 @@ body::after {
 .action-btn {
   padding: 12px 24px;
   border-radius: 12px;
-  font-size: 0.9rem;
+  font-size: 0.96rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
   border: none;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  touch-action: manipulation;
 }
 
 .action-btn.stop {
@@ -718,7 +722,7 @@ table tbody tr:last-child td:last-child {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 2000;
   animation: modalBackdropIn 0.3s ease;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);

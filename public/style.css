@@ -154,15 +154,20 @@ body::after {
   }
 
   .nav-link {
-    padding: 6px 10px;
+    padding: 10px 14px;
     font-size: 0.85rem;
+    min-width: 80px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
   }
 }
 
 @media (max-width: 480px) {
   .nav-link {
-    padding: 6px 8px;
+    padding: 12px 10px;
     font-size: 0.8rem;
+    flex: 1 1 calc(50% - 10px);
   }
 }
 
@@ -240,6 +245,8 @@ body::after {
   border-radius: 10px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .nav-link:hover {
@@ -792,7 +799,7 @@ body::after {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 2000;
   animation: modalBackdropIn 0.3s ease;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -911,6 +918,7 @@ body::after {
   position: relative;
   overflow: hidden;
   margin-top: 8px;
+  touch-action: manipulation;
 }
 
 .admin-btn::before {
