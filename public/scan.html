@@ -433,7 +433,7 @@
 
     } catch (err) {
       log('❌ ' + err.name + ': ' + err.message, '#fca5a5');
-      if (err.name === 'NotAllowedError') {
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         setStatus('err', 'Camera denied — use manual entry below');
         if (!isSecure) warnEl.style.display = 'block';
       } else {
@@ -441,6 +441,28 @@
       }
     }
   }
+
+  // Handle browser Back button (BF-Cache) and returning to tab
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted || done) {
+      log('🔄 Page restored from history, restarting camera...', '#93c5fd');
+      success.classList.remove('on');
+      boot();
+    }
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      // Free hardware when tab is backgrounded
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    } else {
+      // Re-activate if returning to tab and not actively scanning
+      if (!done && (!stream || !stream.active)) {
+        boot();
+      }
+    }
+  });
 
   boot();
 </script>
