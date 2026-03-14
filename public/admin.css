@@ -134,6 +134,29 @@ body::after {
     gap: 12px;
     border-radius: 16px;
   }
+  
+  .nav-logo {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nav-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 6px;
+  }
+
+  .nav-link {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-link {
+    padding: 6px 8px;
+    font-size: 0.8rem;
+  }
 }
 
 .nav-logo {

@@ -138,14 +138,31 @@ body::after {
   .navbar {
     margin: 10px;
     border-radius: 15px;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-direction: column;
     gap: 12px;
   }
   
   .nav-logo {
     width: 100%;
     justify-content: center;
+  }
+
+  .nav-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 6px; /* slightly smaller gap to fit */
+  }
+
+  .nav-link {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-link {
+    padding: 6px 8px;
+    font-size: 0.8rem;
   }
 }
 
