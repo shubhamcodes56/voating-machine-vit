@@ -403,16 +403,23 @@
 
     to {
         opacity: 1;
-        transform: translateY(0);
+    transform: translateY(0);
     }
 }
 
 /* ---- Responsive ---- */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
     .qr-layout {
         grid-template-columns: 1fr;
+        gap: 24px;
     }
+    
+    .qr-hero-title {
+        font-size: 2.5rem;
+    }
+}
 
+@media (max-width: 768px) {
     .qr-info-section {
         grid-template-columns: 1fr;
     }
@@ -420,5 +427,33 @@
     .qr-form-card,
     .qr-result-card {
         padding: 28px 20px;
+    }
+}
+
+@media (max-width: 640px) {
+    .qr-main {
+        padding: 32px 16px;
+    }
+    
+    .qr-form-card, .qr-result-card {
+        padding: 24px 16px;
+    }
+    
+    .qr-hero-badge {
+        font-size: 0.7rem;
+        padding: 4px 12px;
+    }
+    
+    .qr-hero-sub {
+        font-size: 1rem;
+    }
+    
+    .qr-student-badge {
+        padding: 12px;
+    }
+    
+    .qr-canvas-wrapper canvas {
+        width: 100% !important;
+        height: auto !important;
     }
 }

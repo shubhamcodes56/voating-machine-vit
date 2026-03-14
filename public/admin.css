@@ -123,6 +123,17 @@ body::after {
   z-index: 1000;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   animation: slideDownFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    margin: 12px;
+    padding: 10px 16px;
+    flex-direction: column;
+    gap: 12px;
+    border-radius: 16px;
+  }
 }
 
 .nav-logo {
@@ -965,42 +976,81 @@ table tbody tr:last-child td:last-child {
   .admin-header {
     flex-direction: column;
     gap: 24px;
-    align-items: flex-start;
+    align-items: center;
+    text-align: center;
+    padding: 32px 20px;
   }
 
   .header-right {
     width: 100%;
-    justify-content: space-between;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   .admin-main {
-    padding: 24px 20px;
+    padding: 24px 16px;
   }
 }
 
 @media (max-width: 768px) {
   .admin-title {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
 
   .search-section {
     flex-direction: column;
+    gap: 10px;
   }
 
   .refresh-btn {
     width: 100%;
     justify-content: center;
+    padding: 14px;
   }
 
   .stats-box {
-    padding: 12px 20px;
+    padding: 10px 16px;
+    flex: 1;
+    min-width: 120px;
   }
 
   .stats-box span {
-    font-size: 2rem;
+    font-size: 1.75rem;
+  }
+  
+  .votes-section {
+    padding: 16px;
+    border-radius: 16px;
+  }
+  
+  table th, table td {
+    padding: 12px 10px;
+    font-size: 0.85rem;
   }
 
   .actions {
     flex-direction: column;
+    gap: 6px;
+  }
+  
+  .edit-btn, .delete-btn {
+    padding: 6px 12px;
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-right {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .stats-box {
+    width: 100%;
+  }
+  
+  .logout-btn {
+    width: 100%;
   }
 }
