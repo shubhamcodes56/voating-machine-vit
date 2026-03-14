@@ -461,8 +461,24 @@
 
     } catch (err) {
       log('❌ ' + err.name + ': ' + err.message, '#fca5a5');
-      // If we get a permission error even with a gesture, show the error and offer a reset hint
-      setStatus('err', 'Permission denied - check browser settings');
+      
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError' || err.name === 'AbortError') {
+        setStatus('err', 'Hardware Lock detected. Fixing...');
+        log('🔄 Triggering Hardware Reset in 1s...', '#fbbf24');
+        
+        // If we've already tried reloading, don't loop forever
+        const lastReload = sessionStorage.getItem('lastScannerReload');
+        const now = Date.now();
+        if (!lastReload || (now - lastReload > 5000)) {
+           sessionStorage.setItem('lastScannerReload', now);
+           setTimeout(() => window.location.reload(), 1000);
+        } else {
+           setStatus('err', 'Permission permanently denied. Please check site settings.');
+        }
+      } else {
+        setStatus('err', 'Camera Error: ' + err.message);
+      }
+      
       if (!isSecure) warnEl.style.display = 'block';
     }
   }
