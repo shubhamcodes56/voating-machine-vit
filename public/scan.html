@@ -228,7 +228,20 @@
     const elapsed = Date.now() - scanStart;
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
     if (stream) stream.getTracks().forEach(t => t.stop());
-    const vid_str = normalize(rawText);
+
+    let text = rawText.trim();
+    
+    // Check if the QR code is a URL (like the Admin or Monitor auto-login URLs)
+    if (text.toLowerCase().startsWith('http://') || text.toLowerCase().startsWith('https://')) {
+        log('✅ URL detected', '#4ade80');
+        setStatus('ready', 'Scanned URL! Redirecting…');
+        sidEl.textContent = 'Redirecting securely...';
+        success.classList.add('on');
+        setTimeout(() => { window.location.href = text; }, 100);
+        return;
+    }
+
+    const vid_str = normalize(text);
     log('✅ ' + vid_str + ' in ' + elapsed + 'ms', '#4ade80');
     setStatus('ready', 'Scanned in ' + elapsed + 'ms! Redirecting…');
     sidEl.textContent = 'Voter ID: ' + vid_str;
