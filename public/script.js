@@ -33,11 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('[QR Redirect] Auto-triggering verifyVoterId() with:', vid);
       verifyVoterId();
     }, 200);
-    history.replaceState({}, '', '/');
-  }
-
-  // Check voting status
+  // Check voting status immediately and then every 3 seconds
   checkVotingStatus();
+  setInterval(checkVotingStatus, 3000);
 });
 
 // ============ CHECK VOTING STATUS ============
@@ -47,50 +45,66 @@ async function checkVotingStatus() {
   try {
     const response = await fetch('/api/voting-status');
     const data = await response.json();
-    isVotingActive = data.isVotingActive;
+    const newStatus = data.isVotingActive;
 
-    if (!isVotingActive) {
+    // If status changed to inactive
+    if (isVotingActive && !newStatus) {
       showVotingPausedMessage();
+    } 
+    // If status changed back to active
+    else if (!isVotingActive && newStatus) {
+      removeVotingPausedMessage();
     }
+
+    isVotingActive = newStatus;
   } catch (err) {
     console.error('Error checking voting status:', err);
   }
 }
 
 function showVotingPausedMessage() {
+  if (document.getElementById('votingPausedOverlay')) return;
+
   const overlay = document.createElement('div');
   overlay.id = 'votingPausedOverlay';
   overlay.style.cssText = `
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(4, 9, 26, 0.9);
-    backdrop-filter: blur(10px);
+    background: rgba(4, 9, 26, 0.95);
+    backdrop-filter: blur(15px);
     z-index: 9999;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     color: white; font-family: 'Outfit', sans-serif; text-align: center; padding: 20px;
+    animation: fadeIn 0.5s ease;
   `;
   overlay.innerHTML = `
-    <h1 style="font-size: 3rem; margin-bottom: 1rem; color: #F43F5E;">Voting Paused</h1>
-    <p style="font-size: 1.2rem; color: #94A3B8; max-width: 500px;">
-      The voting process has been temporarily halted by the administrator. 
-      Please wait for it to be resumed or contact the election committee.
-    </p>
-    <div style="margin-top: 2rem; padding: 20px; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; background: rgba(255,255,255,0.03);">
-      <p style="font-size: 0.9rem; color: #64748b;">This page will automatically refresh when voting resumes.</p>
+    <div style="background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.2); padding: 40px; border-radius: 30px; max-width: 600px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+      <div style="font-size: 5rem; margin-bottom: 1.5rem;">🛑</div>
+      <h1 style="font-size: 3rem; margin-bottom: 1rem; color: #F43F5E; font-weight: 800; letter-spacing: -1px;">Voting Paused</h1>
+      <p style="font-size: 1.25rem; color: #94A3B8; margin-bottom: 2rem; line-height: 1.6;">
+        The election process has been temporarily halted by the administrator for verification.
+      </p>
+      <div style="padding: 15px 25px; border-radius: 12px; background: rgba(255,255,255,0.03); display: inline-flex; align-items: center; gap: 10px;">
+        <span class="pulse-dot"></span>
+        <span style="font-size: 0.9rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Waiting for resumption...</span>
+      </div>
     </div>
+    <style>
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      .pulse-dot { width: 8px; height: 8px; background: #3B82F6; border-radius: 50%; animation: pulse 1.5s infinite; }
+      @keyframes pulse { 0% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { transform: scale(1.1); opacity: 0.3; box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
+    </style>
   `;
   document.body.appendChild(overlay);
+}
 
-  // Poll for status to resume
-  const pollInterval = setInterval(async () => {
-    try {
-      const resp = await fetch('/api/voting-status');
-      const d = await resp.json();
-      if (d.isVotingActive) {
-        clearInterval(pollInterval);
-        location.reload();
-      }
-    } catch (e) {}
-  }, 5000);
+function removeVotingPausedMessage() {
+  const overlay = document.getElementById('votingPausedOverlay');
+  if (overlay) {
+    overlay.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    overlay.style.opacity = '0';
+    overlay.style.transform = 'scale(1.1)';
+    setTimeout(() => overlay.remove(), 500);
+  }
 }
 
 // ============ RIPPLE EFFECT HELPER ============
