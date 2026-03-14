@@ -218,6 +218,9 @@ app.post('/api/set-voting-mode', async (req, res) => {
     // When stopping the voting session, also pause active voting
     if (!started) {
       await updateSetting('isVotingActive', false);
+    } else {
+      // When starting the voting session, ensure active voting is unpaused
+      await updateSetting('isVotingActive', true);
     }
     res.json({ success: true, votingStarted: started });
   } catch (error) {
