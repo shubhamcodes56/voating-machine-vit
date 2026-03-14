@@ -1284,4 +1284,89 @@ body::after {
 
 #qrScannerPreview img {
   display: none !important;
-}
+}
+
+/* ============ PRE-VOTING BANNER ============ */
+.prevoting-banner {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(217, 119, 6, 0.04) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 20px;
+  padding: 32px 28px;
+  margin: 0 auto 36px;
+  max-width: 960px;
+  animation: fadeSlideUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pvb-inner {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.pvb-icon {
+  font-size: 2.8rem;
+  flex-shrink: 0;
+}
+
+.pvb-text {
+  flex: 1;
+  min-width: 200px;
+}
+
+.pvb-text h2 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #fbbf24;
+  margin-bottom: 6px;
+}
+
+.pvb-text p {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.pvb-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pvb-btn {
+  display: inline-block;
+  padding: 11px 22px;
+  border-radius: 100px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+}
+
+.pvb-btn-primary {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #000;
+}
+
+.pvb-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245,158,11,0.4);
+}
+
+.pvb-btn-secondary {
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.3);
+  color: #fbbf24;
+}
+
+.pvb-btn-secondary:hover {
+  background: rgba(245,158,11,0.18);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 600px) {
+  .pvb-inner { flex-direction: column; text-align: center; }
+  .pvb-actions { justify-content: center; }
+}
+

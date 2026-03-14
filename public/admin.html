@@ -44,11 +44,38 @@
 
       <!-- Main Content -->
       <main class="admin-main">
+
+        <!-- ===== VOTING SESSION CONTROL ===== -->
+        <section class="voting-control-section">
+          <div class="voting-control-card" id="votingControlCard">
+            <div class="vc-status-row">
+              <div class="vc-label">
+                <span class="vc-icon">🗳️</span>
+                <div>
+                  <div class="vc-title">Voting Session</div>
+                  <div class="vc-desc" id="votingModeDesc">Checking status…</div>
+                </div>
+              </div>
+              <div class="vc-badge" id="votingModeBadge">—</div>
+            </div>
+            <div class="vc-btn-row">
+              <button class="vc-btn vc-btn-start" id="startVotingBtn" onclick="setVotingMode(true)">
+                ▶ Start Voting
+              </button>
+              <button class="vc-btn vc-btn-stop" id="stopVotingBtn" onclick="setVotingMode(false)">
+                ⏹ Stop Voting
+              </button>
+            </div>
+            <div class="vc-msg" id="vcMsg"></div>
+          </div>
+        </section>
+
         <!-- Search & Filter -->
         <section class="search-section">
           <input type="text" id="searchBox" placeholder="Search by candidate or voter name..." class="search-input">
           <button class="refresh-btn" onclick="loadAllVotes()">🔄 Refresh</button>
         </section>
+
 
         <!-- Candidate Statistics Section -->
         <section class="candidate-stats-section">

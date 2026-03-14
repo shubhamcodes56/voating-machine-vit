@@ -22,15 +22,94 @@ window.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  // Load all votes immediately
-  await loadAllVotes();
+  // Load all votes and check voting mode on startup
+  await Promise.all([loadAllVotes(), checkVotingMode()]);
 
   // Search functionality
   searchBox.addEventListener('input', filterVotes);
   
   // Rapid Auto-Refresh (Every 5 seconds for live feedback)
   setInterval(loadAllVotes, 5000);
+
+  // Check voting mode every 10 seconds
+  setInterval(checkVotingMode, 10000);
 });
+
+// ============ VOTING SESSION CONTROL ============
+
+async function checkVotingMode() {
+  try {
+    const resp = await fetch('/api/voting-mode');
+    if (!resp.ok) return;
+    const { votingStarted } = await resp.json();
+    updateVotingModeUI(votingStarted);
+  } catch (e) {
+    console.warn('Could not fetch voting mode');
+  }
+}
+
+function updateVotingModeUI(isStarted) {
+  const badge = document.getElementById('votingModeBadge');
+  const desc  = document.getElementById('votingModeDesc');
+  const startBtn = document.getElementById('startVotingBtn');
+  const stopBtn  = document.getElementById('stopVotingBtn');
+  const card  = document.getElementById('votingControlCard');
+
+  if (isStarted) {
+    if (badge) { badge.textContent = '● LIVE'; badge.className = 'vc-badge vc-badge-live'; }
+    if (desc)  desc.textContent = 'Voting is open. Students can cast their votes now.';
+    if (startBtn) startBtn.disabled = true;
+    if (stopBtn)  stopBtn.disabled  = false;
+    if (card)  card.classList.add('vc-card-live');
+    if (card)  card.classList.remove('vc-card-stopped');
+  } else {
+    if (badge) { badge.textContent = '○ NOT STARTED'; badge.className = 'vc-badge vc-badge-stopped'; }
+    if (desc)  desc.textContent = 'Pre-voting mode. Students can see candidates and generate QR.';
+    if (startBtn) startBtn.disabled = false;
+    if (stopBtn)  stopBtn.disabled  = true;
+    if (card)  card.classList.add('vc-card-stopped');
+    if (card)  card.classList.remove('vc-card-live');
+  }
+}
+
+async function setVotingMode(started) {
+  const startBtn = document.getElementById('startVotingBtn');
+  const stopBtn  = document.getElementById('stopVotingBtn');
+  const vcMsg    = document.getElementById('vcMsg');
+
+  if (startBtn) startBtn.disabled = true;
+  if (stopBtn)  stopBtn.disabled  = true;
+  if (vcMsg)  { vcMsg.textContent = '⏳ Updating…'; vcMsg.className = 'vc-msg vc-msg-pending'; }
+
+  try {
+    const resp = await fetch('/api/set-voting-mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: adminPassword, started })
+    });
+    const data = await resp.json();
+
+    if (resp.ok && data.success) {
+      updateVotingModeUI(data.votingStarted);
+      const msg = data.votingStarted
+        ? '✅ Voting session started! The full site is now visible to students.'
+        : '⏹ Voting session stopped. Site is back to pre-voting mode.';
+      if (vcMsg) { vcMsg.textContent = msg; vcMsg.className = 'vc-msg vc-msg-success'; }
+    } else {
+      if (vcMsg) { vcMsg.textContent = '❌ ' + (data.message || 'Update failed.'); vcMsg.className = 'vc-msg vc-msg-error'; }
+      // Re-enable buttons on failure
+      await checkVotingMode();
+    }
+  } catch (err) {
+    if (vcMsg) { vcMsg.textContent = '❌ Network error. Please try again.'; vcMsg.className = 'vc-msg vc-msg-error'; }
+    await checkVotingMode();
+  }
+
+  // Clear message after 4 seconds
+  setTimeout(() => { if (vcMsg) { vcMsg.textContent = ''; vcMsg.className = 'vc-msg'; } }, 4000);
+}
+
+
 
 // ============ LOAD ALL VOTES ============
 async function loadAllVotes() {

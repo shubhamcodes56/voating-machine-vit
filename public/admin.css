@@ -1177,3 +1177,137 @@ table tbody tr:last-child td:last-child {
     width: 100%;
   }
 }
+
+/* ============ VOTING SESSION CONTROL CARD ============ */
+.voting-control-section {
+  margin-bottom: 24px;
+}
+
+.voting-control-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 24px 28px;
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.vc-card-live {
+  background: rgba(34, 197, 94, 0.05);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.vc-card-stopped {
+  background: rgba(245, 158, 11, 0.05);
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.vc-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+}
+
+.vc-label {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.vc-icon {
+  font-size: 2rem;
+}
+
+.vc-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.vc-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.vc-badge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 5px 14px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.vc-badge-live {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #86efac;
+}
+
+.vc-badge-stopped {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fcd34d;
+}
+
+.vc-btn-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.vc-btn {
+  flex: 1;
+  min-width: 130px;
+  padding: 13px 24px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.25s ease;
+  font-family: inherit;
+  letter-spacing: 0.5px;
+}
+
+.vc-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.vc-btn-start {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(22, 163, 74, 0.3);
+}
+
+.vc-btn-start:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(22, 163, 74, 0.45);
+}
+
+.vc-btn-stop {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(220, 38, 38, 0.3);
+}
+
+.vc-btn-stop:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(220, 38, 38, 0.45);
+}
+
+.vc-msg {
+  margin-top: 14px;
+  font-size: 0.88rem;
+  min-height: 22px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.vc-msg-success { color: #86efac; }
+.vc-msg-error   { color: #fca5a5; }
+.vc-msg-pending { color: #fcd34d; }

@@ -34,10 +34,47 @@ document.addEventListener('DOMContentLoaded', () => {
       verifyVoterId();
     }, 200);
   }
-  // Check voting status immediately and then every 3 seconds
+
+  // Check voting MODE first (is session open?) then status (is voting paused?)
+  checkVotingMode();
   checkVotingStatus();
+
+  // Poll every 5 seconds for live updates
+  setInterval(checkVotingMode, 5000);
   setInterval(checkVotingStatus, 3000);
 });
+
+// ============ PRE-VOTING MODE CHECK ============
+async function checkVotingMode() {
+  try {
+    const resp = await fetch('/api/voting-mode');
+    if (!resp.ok) return;
+    const { votingStarted } = await resp.json();
+
+    const banner        = document.getElementById('preVotingBanner');
+    const votingHeader  = document.getElementById('votingHeader');
+    const votingMain    = document.getElementById('votingMain');
+    const kioskNavLink  = document.getElementById('kioskNavLink');
+
+    if (votingStarted) {
+      // Voting is open — show full site
+      if (banner)       banner.style.display = 'none';
+      if (votingHeader) votingHeader.style.display = '';
+      if (votingMain)   votingMain.style.display = '';
+      if (kioskNavLink) kioskNavLink.style.display = '';
+    } else {
+      // Pre-voting mode — hide voting interface, show banner
+      if (banner)       banner.style.display = 'block';
+      if (votingHeader) votingHeader.style.display = 'none';
+      if (votingMain)   votingMain.style.display = 'none';
+      if (kioskNavLink) kioskNavLink.style.display = 'none';
+    }
+  } catch (e) {
+    // silently fail — default shows full site
+  }
+}
+
+
 
 // ============ CHECK VOTING STATUS ============
 let isVotingActive = true;

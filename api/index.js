@@ -191,6 +191,48 @@ app.post('/api/toggle-voting', async (req, res) => {
   }
 });
 
+// API: Get voting MODE (has admin started the voting session at all?)
+// votingStarted=false → pre-voting mode, site shows only QR & Candidates
+// votingStarted=true  → full site is visible
+app.get('/api/voting-mode', async (req, res) => {
+  try {
+    const votingStarted = await getSetting('votingStarted', false);
+    res.json({ votingStarted });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+});
+
+// API: Admin starts or stops the voting session
+app.post('/api/set-voting-mode', async (req, res) => {
+  try {
+    const password = req.body.password || req.query.password;
+    if (!password || password !== ADMIN_PASSWORD) {
+      return res.status(401).json({ message: 'Unauthorized! Admin only.' });
+    }
+    const { started } = req.body;
+    if (typeof started !== 'boolean') {
+      return res.status(400).json({ message: 'Invalid value for started' });
+    }
+    await updateSetting('votingStarted', started);
+    // When stopping the voting session, also pause active voting
+    if (!started) {
+      await updateSetting('isVotingActive', false);
+    }
+    res.json({ success: true, votingStarted: started });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+});
+
+// Route: Candidates page
+app.get('/candidates', (req, res) => res.redirect('/candidates.html'));
+app.get('/candidates.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public', 'candidates.html'));
+});
+
+
+
 // API: Verify Voter ID
 app.post('/api/verify-voter-id', async (req, res) => {
   try {

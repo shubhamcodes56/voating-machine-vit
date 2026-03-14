@@ -23,21 +23,38 @@
       <div class="nav-links">
         <a href="/" class="nav-link active">Home</a>
         <a href="/qr.html" class="nav-link">My QR</a>
-        <a href="/scan" class="nav-link">📷 Kiosk Scan</a>
+        <a href="/candidates.html" class="nav-link">Our Leaders</a>
+        <a href="/scan" class="nav-link" id="kioskNavLink">📷 Kiosk Scan</a>
         <a href="#" class="nav-link" onclick="showAdminPanel(); return false;">Admin</a>
         <a href="#" class="nav-link" onclick="showMonitorPanel(); return false;">Monitoring</a>
       </div>
     </nav>
     <div class="content-wrapper">
+
+      <!-- Pre-Voting Banner (shown when voting has not started) -->
+      <div id="preVotingBanner" class="prevoting-banner" style="display:none;">
+        <div class="pvb-inner">
+          <div class="pvb-icon">⏳</div>
+          <div class="pvb-text">
+            <h2>Voting Has Not Started Yet</h2>
+            <p>The admin hasn't opened the voting session. You can generate your QR code or read about our leaders while you wait.</p>
+          </div>
+          <div class="pvb-actions">
+            <a href="/qr.html" class="pvb-btn pvb-btn-primary">📲 Generate QR</a>
+            <a href="/candidates.html" class="pvb-btn pvb-btn-secondary">👥 Our Leaders</a>
+          </div>
+        </div>
+      </div>
+
       <!-- Header -->
-      <header class="header">
+      <header class="header" id="votingHeader">
         <div class="header-content">
           <h1 class="title">Cast Your Vote</h1>
         </div>
       </header>
 
       <!-- Main Content -->
-      <main class="main">
+      <main class="main" id="votingMain">
         <!-- Voter ID Verification Section (shown first) -->
         <section id="voterIdSection" class="voting-section">
           <div class="form-container">
