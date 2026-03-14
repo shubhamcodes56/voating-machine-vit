@@ -175,8 +175,8 @@ async function submitVote() {
     if (response.ok) {
       showSuccess('Vote recorded successfully! Redirecting...');
       setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+        window.location.href = '/scan';
+      }, 800);
     } else {
       showError(data.message || 'Error submitting vote');
     }
