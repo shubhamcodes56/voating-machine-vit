@@ -53,36 +53,82 @@ function generateQR() {
 function downloadQR() {
   const container = document.getElementById('qrCanvas');
   const imgEl     = container.querySelector('img') || container.querySelector('canvas');
-  if (!imgEl) { alert('Generate QR first.'); return; }
+  if (!imgEl) { 
+    showFormError('Please generate a QR code first.'); 
+    return; 
+  }
 
-  const name    = document.getElementById('displayName').textContent.replace(/\s+/g, '_');
+  const name    = document.getElementById('displayName').textContent.trim() || 'Voter';
+  const fileNameName = name.replace(/\s+/g, '_');
   const voterId = document.getElementById('displayVoterId').textContent;
 
   // Draw onto a new canvas with a white border + label
-  const src = imgEl.tagName === 'IMG' ? imgEl.src : imgEl.toDataURL();
   const img = new Image();
+  img.crossOrigin = 'anonymous'; // Good practice for external sources
+  
   img.onload = () => {
-    const pad = 24, lb = 50;
-    const out = document.createElement('canvas');
-    out.width  = img.width  + pad * 2;
-    out.height = img.height + pad * 2 + lb;
-    const c = out.getContext('2d');
-    c.fillStyle = '#ffffff';
-    c.fillRect(0, 0, out.width, out.height);
-    c.drawImage(img, pad, pad, img.width, img.height);
-    c.fillStyle = '#000000';
-    c.font = 'bold 16px Arial, sans-serif';
-    c.textAlign = 'center';
-    c.fillText('Voter ID: ' + voterId, out.width / 2, out.height - 28);
-    c.fillStyle = '#666';
-    c.font = '11px Arial, sans-serif';
-    c.fillText('Official Voting Machine', out.width / 2, out.height - 10);
-    const a = document.createElement('a');
-    a.download = 'QR_' + voterId + '_' + name + '.png';
-    a.href = out.toDataURL('image/png');
-    a.click();
+    try {
+      const pad = 24, lb = 60;
+      const out = document.createElement('canvas');
+      out.width  = img.width  + pad * 2;
+      out.height = img.height + pad * 2 + lb;
+      const ctx = out.getContext('2d');
+      
+      // White background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, out.width, out.height);
+      
+      // Draw QR code
+      ctx.drawImage(img, pad, pad, img.width, img.height);
+      
+      // Text styling
+      ctx.fillStyle = '#000000';
+      ctx.textAlign = 'center';
+      
+      // Voter ID Label
+      ctx.font = 'bold 20px Arial, sans-serif';
+      ctx.fillText('Voter ID: ' + voterId, out.width / 2, out.height - 35);
+      
+      // Footer Label
+      ctx.fillStyle = '#666666';
+      ctx.font = '14px Arial, sans-serif';
+      ctx.fillText('Official Voting Machine - Secure Pass', out.width / 2, out.height - 12);
+
+      // Robust Download Method
+      out.toBlob((blob) => {
+        if (!blob) {
+          alert('Failed to process image blob. Please try again.');
+          return;
+        }
+        
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `QR_${voterId}_${fileNameName}.png`;
+        
+        // Critical for mobile: appending to body before click
+        document.body.appendChild(a);
+        a.click();
+        
+        // Cleanup
+        setTimeout(() => {
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        }, 100);
+      }, 'image/png');
+    } catch (err) {
+      console.error('Download error:', err);
+      alert('Could not download image. Error: ' + err.message);
+    }
   };
-  img.src = src;
+
+  img.onerror = () => {
+    alert('Failed to load QR image for download. Please regenerate.');
+  };
+
+  // Handle both img (src) and canvas (toDataURL) sources
+  img.src = imgEl.tagName === 'IMG' ? imgEl.src : imgEl.toDataURL('image/png');
 }
 
 // ============ RESET ============
