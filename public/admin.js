@@ -17,8 +17,14 @@ window.addEventListener('DOMContentLoaded', async () => {
   adminPassword = sessionStorage.getItem('adminPassword');
 
   if (!adminPassword) {
-    console.warn('No admin session found. Redirecting...');
-    window.location.href = '/?msg=session_expired';
+    // If opened via QR code (?qr=admin), show inline login overlay
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('qr') === 'admin') {
+      showAdminLoginOverlay();
+    } else {
+      console.warn('No admin session found. Redirecting...');
+      window.location.href = '/?msg=session_expired';
+    }
     return;
   }
 
@@ -34,6 +40,67 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Check voting mode every 10 seconds
   setInterval(checkVotingMode, 10000);
 });
+
+// ============ INLINE LOGIN OVERLAY (triggered by QR scan) ============
+function showAdminLoginOverlay() {
+  const overlay = document.createElement('div');
+  overlay.id = 'adminQRLoginOverlay';
+  overlay.style.cssText = `
+    position: fixed; inset: 0;
+    background: rgba(4,9,26,0.96);
+    backdrop-filter: blur(20px);
+    z-index: 10001;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Outfit', sans-serif; padding: 20px;
+    animation: fadeIn 0.4s ease;
+  `;
+  overlay.innerHTML = `
+    <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(37,99,235,0.3); padding: 40px 36px; border-radius: 28px; max-width: 420px; width: 100%; text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,0.6);">
+      <div style="font-size: 3.5rem; margin-bottom: 16px;">🛡️</div>
+      <h2 style="font-size: 1.6rem; font-weight: 800; color: #fff; margin-bottom: 8px;">Admin Access</h2>
+      <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 28px;">Enter your admin password to continue.</p>
+      <input id="qrAdminPasswordInput" type="password" placeholder="Admin password"
+        style="width: 100%; padding: 14px 18px; border-radius: 12px; border: 1px solid rgba(37,99,235,0.4); background: rgba(255,255,255,0.06); color: #fff; font-size: 1rem; font-family: 'Outfit', sans-serif; margin-bottom: 16px; outline: none; box-sizing: border-box;"
+        onkeydown="if(event.key==='Enter') submitAdminQRLogin()">
+      <div id="qrAdminMsg" style="color: #f43f5e; font-size: 0.85rem; margin-bottom: 12px; min-height: 20px;"></div>
+      <button onclick="submitAdminQRLogin()"
+        style="width: 100%; padding: 14px; border-radius: 12px; background: linear-gradient(135deg,#2563eb,#1d4ed8); color: #fff; font-weight: 800; font-size: 1rem; border: none; cursor: pointer; font-family: 'Outfit', sans-serif; transition: opacity 0.2s;">
+        Enter Admin Panel ▶
+      </button>
+    </div>
+    <style>@keyframes fadeIn { from {opacity:0;} to {opacity:1;} }</style>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(() => {
+    const inp = document.getElementById('qrAdminPasswordInput');
+    if (inp) inp.focus();
+  }, 300);
+}
+
+async function submitAdminQRLogin() {
+  const input = document.getElementById('qrAdminPasswordInput');
+  const msg   = document.getElementById('qrAdminMsg');
+  const pwd   = input ? input.value.trim() : '';
+
+  if (!pwd) { if (msg) msg.textContent = 'Please enter the password.'; return; }
+
+  // Verify by calling the API with this password
+  try {
+    const resp = await fetch('/api/votes', {
+      headers: { 'x-admin-password': pwd }
+    });
+    if (resp.ok || resp.status === 200) {
+      // Valid — store and reload to enter the dashboard
+      sessionStorage.setItem('adminPassword', pwd);
+      window.location.reload();
+    } else {
+      if (msg) msg.textContent = '❌ Incorrect password. Try again.';
+      if (input) { input.value = ''; input.focus(); }
+    }
+  } catch (e) {
+    if (msg) msg.textContent = '❌ Network error. Please try again.';
+  }
+}
 
 // ============ VOTING SESSION CONTROL ============
 

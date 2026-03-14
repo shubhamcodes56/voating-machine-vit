@@ -16,8 +16,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     monitorPassword = sessionStorage.getItem('monitorPassword');
 
     if (!monitorPassword) {
-        console.warn('No monitoring session found. Redirecting...');
-        window.location.href = '/?msg=session_expired';
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('qr') === 'monitor') {
+            showMonitorLoginOverlay();
+        } else {
+            console.warn('No monitoring session found. Redirecting...');
+            window.location.href = '/?msg=session_expired';
+        }
         return;
     }
 
@@ -33,6 +38,65 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Rapid Auto-Refresh (Every 5 seconds for live feedback)
     setInterval(loadAllVotes, 5000);
 });
+
+// ============ INLINE LOGIN OVERLAY (triggered by QR scan) ============
+function showMonitorLoginOverlay() {
+  const overlay = document.createElement('div');
+  overlay.id = 'monitorQRLoginOverlay';
+  overlay.style.cssText = `
+    position: fixed; inset: 0;
+    background: rgba(4,9,26,0.96);
+    backdrop-filter: blur(20px);
+    z-index: 10001;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Outfit', sans-serif; padding: 20px;
+    animation: fadeIn 0.4s ease;
+  `;
+  overlay.innerHTML = `
+    <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(245,158,11,0.3); padding: 40px 36px; border-radius: 28px; max-width: 420px; width: 100%; text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,0.6);">
+      <div style="font-size: 3.5rem; margin-bottom: 16px;">📊</div>
+      <h2 style="font-size: 1.6rem; font-weight: 800; color: #fff; margin-bottom: 8px;">Monitoring Access</h2>
+      <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 28px;">Enter your monitoring password to continue.</p>
+      <input id="qrMonitorPasswordInput" type="password" placeholder="Monitor password"
+        style="width: 100%; padding: 14px 18px; border-radius: 12px; border: 1px solid rgba(245,158,11,0.4); background: rgba(255,255,255,0.06); color: #fff; font-size: 1rem; font-family: 'Outfit', sans-serif; margin-bottom: 16px; outline: none; box-sizing: border-box;"
+        onkeydown="if(event.key==='Enter') submitMonitorQRLogin()">
+      <div id="qrMonitorMsg" style="color: #f43f5e; font-size: 0.85rem; margin-bottom: 12px; min-height: 20px;"></div>
+      <button onclick="submitMonitorQRLogin()"
+        style="width: 100%; padding: 14px; border-radius: 12px; background: linear-gradient(135deg,#f59e0b,#d97706); color: #000; font-weight: 800; font-size: 1rem; border: none; cursor: pointer; font-family: 'Outfit', sans-serif;">
+        Enter Monitoring Panel ▶
+      </button>
+    </div>
+    <style>@keyframes fadeIn { from {opacity:0;} to {opacity:1;} }</style>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(() => {
+    const inp = document.getElementById('qrMonitorPasswordInput');
+    if (inp) inp.focus();
+  }, 300);
+}
+
+async function submitMonitorQRLogin() {
+  const input = document.getElementById('qrMonitorPasswordInput');
+  const msg   = document.getElementById('qrMonitorMsg');
+  const pwd   = input ? input.value.trim() : '';
+
+  if (!pwd) { if (msg) msg.textContent = 'Please enter the password.'; return; }
+
+  try {
+    const resp = await fetch('/api/votes', {
+      headers: { 'x-monitor-password': pwd }
+    });
+    if (resp.ok || resp.status === 200) {
+      sessionStorage.setItem('monitorPassword', pwd);
+      window.location.reload();
+    } else {
+      if (msg) msg.textContent = '❌ Incorrect password. Try again.';
+      if (input) { input.value = ''; input.focus(); }
+    }
+  } catch (e) {
+    if (msg) msg.textContent = '❌ Network error. Please try again.';
+  }
+}
 
 // ============ CHECK VOTING STATUS ============
 async function checkVotingStatus() {

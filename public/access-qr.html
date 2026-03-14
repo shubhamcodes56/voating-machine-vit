@@ -255,8 +255,9 @@
     function generateQRCodes() {
       const base = window.location.origin;
 
-      const adminUrl   = base + '/admin';
-      const monitorUrl = base + '/monitor';
+      // Use direct .html paths with ?qr= marker so panels auto-open their login
+      const adminUrl   = base + '/admin.html?qr=admin';
+      const monitorUrl = base + '/monitor.html?qr=monitor';
 
       document.getElementById('adminUrlDisplay').textContent   = adminUrl;
       document.getElementById('monitorUrlDisplay').textContent = monitorUrl;
