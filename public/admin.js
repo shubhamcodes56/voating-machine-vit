@@ -23,10 +23,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       // Auto-login from QR code — decode the token and validate
       try {
         const decoded = atob(autoToken);
-        const resp = await fetch('/api/votes', {
-          headers: { 'x-admin-password': decoded }
-        });
-        if (resp.ok) {
+        const resp = await fetch('/api/verify-token?password=' + encodeURIComponent(decoded) + '&type=admin');
+        const data = await resp.json();
+        if (data.valid) {
           sessionStorage.setItem('adminPassword', decoded);
           adminPassword = decoded;
           // Remove the token from URL (clean URL) then continue loading

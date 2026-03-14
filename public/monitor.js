@@ -21,10 +21,9 @@ window.addEventListener('DOMContentLoaded', async () => {
         if (autoToken) {
             try {
                 const decoded = atob(autoToken);
-                const resp = await fetch('/api/votes', {
-                    headers: { 'x-monitor-password': decoded }
-                });
-                if (resp.ok) {
+                const resp = await fetch('/api/verify-token?password=' + encodeURIComponent(decoded) + '&type=monitor');
+                const data = await resp.json();
+                if (data.valid) {
                     sessionStorage.setItem('monitorPassword', decoded);
                     monitorPassword = decoded;
                     const cleanUrl = window.location.pathname;

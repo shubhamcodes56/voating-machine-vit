@@ -376,6 +376,15 @@ app.get('/api/admin-status', (req, res) => {
   }
 });
 
+// API: Verify a password token (used by QR auto-login)
+app.get('/api/verify-token', (req, res) => {
+  const { password, type } = req.query;
+  if (!password) return res.status(400).json({ valid: false, message: 'No password provided' });
+  if (type === 'admin')   return res.json({ valid: password === ADMIN_PASSWORD });
+  if (type === 'monitor') return res.json({ valid: password === MONITOR_PASSWORD });
+  return res.status(400).json({ valid: false, message: 'Invalid type' });
+});
+
 // API: Get all votes (PASSWORD PROTECTED - ADMIN ONLY)
 app.get('/api/all-votes', async (req, res) => {
   try {
