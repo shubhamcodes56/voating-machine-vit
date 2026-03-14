@@ -32,20 +32,18 @@ window.addEventListener('DOMContentLoaded', async () => {
           const cleanUrl = window.location.pathname;
           window.history.replaceState({}, document.title, cleanUrl);
         } else {
-          // Token invalid — redirect to home
-          window.location.href = '/?msg=invalid_qr';
+          // Token invalid — show password prompt instead of redirecting
+          showAdminLoginOverlay();
           return;
         }
       } catch (e) {
-        window.location.href = '/?msg=invalid_qr';
+        console.warn('QR validation failed:', e);
+        showAdminLoginOverlay();
         return;
       }
-    } else if (params.get('qr') === 'admin') {
-      showAdminLoginOverlay();
-      return;
     } else {
-      console.warn('No admin session found. Redirecting...');
-      window.location.href = '/?msg=session_expired';
+      // Direct access or no valid token — just show password prompt
+      showAdminLoginOverlay();
       return;
     }
   }

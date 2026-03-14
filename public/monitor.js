@@ -29,19 +29,18 @@ window.addEventListener('DOMContentLoaded', async () => {
                     const cleanUrl = window.location.pathname;
                     window.history.replaceState({}, document.title, cleanUrl);
                 } else {
-                    window.location.href = '/?msg=invalid_qr';
+                    // Token invalid — show password prompt instead of redirecting
+                    showMonitorLoginOverlay();
                     return;
                 }
             } catch (e) {
-                window.location.href = '/?msg=invalid_qr';
+                console.warn('QR validation failed:', e);
+                showMonitorLoginOverlay();
                 return;
             }
-        } else if (params.get('qr') === 'monitor') {
-            showMonitorLoginOverlay();
-            return;
         } else {
-            console.warn('No monitoring session found. Redirecting...');
-            window.location.href = '/?msg=session_expired';
+            // Direct access or no valid token — just show password prompt
+            showMonitorLoginOverlay();
             return;
         }
     }
