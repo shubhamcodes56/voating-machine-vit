@@ -96,25 +96,25 @@ const Vote = mongoose.model('Vote', voteSchema);
 
 // Admin - Send admin dashboard
 app.get('/admin.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+  res.sendFile(path.join(__dirname, '../public', 'admin.html'));
 });
 
 // Monitor - Send monitoring dashboard
 app.get('/monitor.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'monitor.html'));
+  res.sendFile(path.join(__dirname, '../public', 'monitor.html'));
 });
 
 // QR Generator - Send QR code generator page
 app.get('/qr.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'qr.html'));
+  res.sendFile(path.join(__dirname, '../public', 'qr.html'));
 });
 
 // Kiosk QR Scanner
 app.get('/scan', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'scan.html'));
+  res.sendFile(path.join(__dirname, '../public', 'scan.html'));
 });
 app.get('/scan.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'scan.html'));
+  res.sendFile(path.join(__dirname, '../public', 'scan.html'));
 });
 
 // Normalize voter ID: accept "0001" (from ultra-simple QR) or "VID0001" / "VID5000" (full format)
