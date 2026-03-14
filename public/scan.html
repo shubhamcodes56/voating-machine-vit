@@ -152,14 +152,6 @@
   <video id="v" autoplay muted playsinline></video>
   <div class="corners"></div>
   <div class="scan-line"></div>
-  <!-- Fallback button for BF-Cache / Permission Denied -->
-  <div id="unlock-overlay" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(4px); z-index:10; flex-direction:column; align-items:center; justify-content:center; gap:12px;">
-    <div style="font-size:3rem;">🔒</div>
-    <div style="color:#fca5a5; font-size:0.9rem; text-align:center; padding:0 20px;">Camera locked by browser.</div>
-    <button onclick="unlockCamera()" style="padding:12px 24px; background:linear-gradient(135deg,#3b82f6,#1d4ed8); border:none; border-radius:12px; color:#fff; font-weight:800; font-size:1rem; cursor:pointer; box-shadow:0 10px 25px rgba(59,130,246,0.4);">
-      Tap to Unlock Camera
-    </button>
-  </div>
 </div>
 
 <canvas id="c" style="display:none"></canvas>
@@ -442,8 +434,7 @@
     } catch (err) {
       log('❌ ' + err.name + ': ' + err.message, '#fca5a5');
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setStatus('err', 'Camera locked — tap to unlock');
-        document.getElementById('unlock-overlay').style.display = 'flex';
+        setStatus('err', 'Camera denied — use manual entry below');
         if (!isSecure) warnEl.style.display = 'block';
       } else {
         setStatus('err', err.message);
@@ -451,32 +442,23 @@
     }
   }
 
-  function unlockCamera() {
-    document.getElementById('unlock-overlay').style.display = 'none';
-    boot();
-  }
-
-  // Handle browser Back button (BF-Cache) and returning to tab
+  // Because mobile browsers lock the camera pipeline aggressively when navigating 
+  // away, a soft BF-cache resume is often insufficient. We forcefully destroy the 
+  // old environment and trigger a cold reload to get fresh hardware access.
   window.addEventListener('pageshow', (e) => {
-    if (e.persisted || done) {
-      log('🔄 Page restored from history...', '#93c5fd');
-      success.classList.remove('on');
-      // Show unlock button instead of auto-booting to satisfy mobile browser user-gesture requirements
-      document.getElementById('unlock-overlay').style.display = 'flex';
-      setStatus('err', 'Camera paused — tap to resume');
+    if (e.persisted) {
+      log('🔄 Hard reloading from BF-cache to unlock camera...', '#fbbf24');
+      window.location.reload();
     }
   });
 
+  // Keep visibilitychange purely to pause the loop, to save battery, but
+  // don't try to stop/start tracks here since it causes race conditions on iOS.
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      // Free hardware when tab is backgrounded
-      if (stream) stream.getTracks().forEach(t => t.stop());
       if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
     } else {
-      // Re-activate if returning to tab and not actively scanning
-      if (!done && (!stream || !stream.active)) {
-        boot();
-      }
+      if (!done && !rafId) { rafId = requestAnimationFrame(jsqrLoop); }
     }
   });
 
