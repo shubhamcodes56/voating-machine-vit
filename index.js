@@ -36,35 +36,40 @@ const mongoose = require('mongoose');
 // Connect to MongoDB (Defaulting to localhost unless process.env.MONGODB_URI is provided)
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/voting_machine';
 
-let isConnected = false;
+// Proper connection caching for Vercel serverless: use Mongoose's readyState
+// readyState: 0=disconnected, 1=connected, 2=connecting, 3=disconnecting
 const connectDB = async () => {
-  if (isConnected) {
+  const state = mongoose.connection.readyState;
+  if (state === 1 || state === 2) {
+    // Already connected or connecting — reuse it
     return;
   }
   try {
-    const db = await mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-      socketTimeoutMS: 45000,         // Close sockets after 45s
+    await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      maxPoolSize: 10,
     });
-    isConnected = db.connections[0].readyState;
     console.log('✅ Connected to MongoDB successfully');
   } catch (err) {
-    console.error('❌ MongoDB connection error:', err);
+    console.error('❌ MongoDB connection error:', err.message);
+    throw err; // Let middleware handle it
   }
 };
 
-// Middleware to ensure DB connection on API routes (crucial for Vercel serverless functions)
+// Middleware: ensure DB is connected for all /api routes, return 503 on failure
 app.use(async (req, res, next) => {
-  if (req.path.startsWith('/api') || req.path === '/api/all-votes') {
-    await connectDB();
+  if (req.path.startsWith('/api')) {
+    try {
+      await connectDB();
+    } catch (err) {
+      return res.status(503).json({
+        message: 'Database connection failed. Check your MONGODB_URI environment variable in Vercel.'
+      });
+    }
   }
   next();
 });
-
-// Optionally connect immediately for local development
-if (process.env.NODE_ENV !== 'production') {
-  connectDB();
-}
 
 // Define Vote Schema and Model
 const voteSchema = new mongoose.Schema({
