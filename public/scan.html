@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>QR Scanner - Voting Machine</title>
+  <title>Kiosk Scanner - Voting Machine</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <link rel="stylesheet" href="admin.css">
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -227,7 +231,17 @@
     done = true;
     const elapsed = Date.now() - scanStart;
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-    if (stream) stream.getTracks().forEach(t => t.stop());
+    
+    // EXTREMELY AGGRESSIVE CLEANUP
+    if (stream) {
+      stream.getTracks().forEach(t => {
+        t.stop();
+        t.enabled = false;
+      });
+      stream = null;
+    }
+    vid.srcObject = null;
+    vid.pause();
 
     let text = rawText.trim();
     
@@ -434,7 +448,12 @@
     } catch (err) {
       log('❌ ' + err.name + ': ' + err.message, '#fca5a5');
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setStatus('err', 'Camera denied — use manual entry below');
+        setStatus('err', 'Camera locked — tap "Home" then back here');
+        // If it's a persistent permission error on history back, sometimes a reload is the only cure
+        if (performance.navigation.type === 2) { 
+           log('⚠️ Detected history-back permission block. Reloading...', '#f87171');
+           setTimeout(() => window.location.reload(), 1500);
+        }
         if (!isSecure) warnEl.style.display = 'block';
       } else {
         setStatus('err', err.message);
@@ -445,24 +464,22 @@
   // Because mobile browsers lock the camera pipeline aggressively when navigating 
   // away, a soft BF-cache resume is often insufficient. We forcefully destroy the 
   // old environment and trigger a cold reload to get fresh hardware access.
+  // Force fresh load on any history transition
   window.addEventListener('pageshow', (e) => {
-    if (e.persisted) {
-      log('🔄 Hard reloading from BF-cache to unlock camera...', '#fbbf24');
+    if (e.persisted || (window.performance && window.performance.navigation.type === 2)) {
       window.location.reload();
     }
   });
 
-  // Keep visibilitychange purely to pause the loop, to save battery, but
-  // don't try to stop/start tracks here since it causes race conditions on iOS.
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-    } else {
-      if (!done && !rafId) { rafId = requestAnimationFrame(jsqrLoop); }
+  // Ensure cleanup on page leave
+  window.addEventListener('beforeunload', () => {
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
     }
   });
 
-  boot();
+  // Small delay for hardware stability on load
+  setTimeout(boot, 300);
 </script>
 
 </body>
