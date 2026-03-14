@@ -251,7 +251,8 @@
         setStatus('ready', 'Scanned URL! Redirecting…');
         sidEl.textContent = 'Redirecting securely...';
         success.classList.add('on');
-        setTimeout(() => { window.location.href = text; }, 100);
+        // Use replace() to remove scanner from history, preventing "Back" button locks
+        setTimeout(() => { window.location.replace(text); }, 500);
         return;
     }
 
@@ -260,7 +261,8 @@
     setStatus('ready', 'Scanned in ' + elapsed + 'ms! Redirecting…');
     sidEl.textContent = 'Voter ID: ' + vid_str;
     success.classList.add('on');
-    setTimeout(() => { window.location.href = '/?vid=' + encodeURIComponent(vid_str); }, 100);
+    // Use replace() to remove scanner from history, preventing "Back" button locks
+    setTimeout(() => { window.location.replace('/?vid=' + encodeURIComponent(vid_str)); }, 500);
   }
 
   function manualSubmit() {
