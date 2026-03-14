@@ -128,9 +128,14 @@ function showVotingPausedMessage() {
       <p style="font-size: 1.25rem; color: #94A3B8; margin-bottom: 2rem; line-height: 1.6;">
         The election process has been temporarily halted by the administrator for verification.
       </p>
-      <div style="padding: 15px 25px; border-radius: 12px; background: rgba(255,255,255,0.03); display: inline-flex; align-items: center; gap: 10px;">
+      <div style="padding: 15px 25px; border-radius: 12px; background: rgba(255,255,255,0.03); display: inline-flex; align-items: center; gap: 10px; margin-bottom: 30px;">
         <span class="pulse-dot"></span>
         <span style="font-size: 0.9rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Waiting for resumption...</span>
+      </div>
+      <div>
+        <button onclick="showMonitorPanel()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #94A3B8; padding: 10px 20px; border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;">
+          🔒 Monitoring Access
+        </button>
       </div>
     </div>
     <style>
