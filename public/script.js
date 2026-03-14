@@ -45,11 +45,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============ PRE-VOTING MODE CHECK ============
+let currentVotingStarted = false; // Global to track pre-voting state
+
 async function checkVotingMode() {
   try {
     const resp = await fetch('/api/voting-mode');
     if (!resp.ok) return;
     const { votingStarted } = await resp.json();
+    currentVotingStarted = votingStarted;
 
     const banner        = document.getElementById('preVotingBanner');
     const votingHeader  = document.getElementById('votingHeader');
@@ -68,13 +71,14 @@ async function checkVotingMode() {
       if (votingHeader) votingHeader.style.display = 'none';
       if (votingMain)   votingMain.style.display = 'none';
       if (kioskNavLink) kioskNavLink.style.display = 'none';
+      
+      // Ensure the "paused" overlay doesn't show in pre-voting mode
+      removeVotingPausedMessage();
     }
   } catch (e) {
     // silently fail — default shows full site
   }
 }
-
-
 
 // ============ CHECK VOTING STATUS ============
 let isVotingActive = true;
@@ -85,13 +89,16 @@ async function checkVotingStatus() {
     const data = await response.json();
     const newStatus = data.isVotingActive;
 
-    // If status changed to inactive
-    if (isVotingActive && !newStatus) {
-      showVotingPausedMessage();
-    } 
-    // If status changed back to active
-    else if (!isVotingActive && newStatus) {
-      removeVotingPausedMessage();
+    // Only show paused message if we are NOT in pre-voting mode
+    if (currentVotingStarted) {
+      // If status changed to inactive
+      if (isVotingActive && !newStatus) {
+        showVotingPausedMessage();
+      } 
+      // If status changed back to active
+      else if (!isVotingActive && newStatus) {
+        removeVotingPausedMessage();
+      }
     }
 
     isVotingActive = newStatus;
