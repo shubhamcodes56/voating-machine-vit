@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Access QR Codes – Voting Machine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    .access-qr-main {
+      flex: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 20px;
+      width: 100%;
+    }
+
+    /* Hero */
+    .aq-hero { text-align: center; margin-bottom: 48px; }
+    .aq-badge {
+      display: inline-block;
+      background: rgba(37,99,235,0.1);
+      border: 1px solid rgba(37,99,235,0.3);
+      color: #60a5fa;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 5px 16px;
+      border-radius: 100px;
+      margin-bottom: 18px;
+    }
+    .aq-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, #fff 30%, #60a5fa 100%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+    .aq-sub {
+      color: var(--text-secondary, #94a3b8);
+      font-size: 0.95rem;
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* Grid */
+    .aq-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 28px;
+      margin-bottom: 40px;
+    }
+
+    /* Card */
+    .aq-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 24px;
+      padding: 36px 28px;
+      text-align: center;
+      transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+      position: relative;
+      overflow: hidden;
+      animation: fadeSlideUp 0.7s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    .aq-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .aq-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    }
+    .aq-card-admin  { border-color: rgba(37,99,235,0.25); }
+    .aq-card-admin:hover  { border-color: rgba(37,99,235,0.5); }
+    .aq-card-monitor { border-color: rgba(245,158,11,0.25); }
+    .aq-card-monitor:hover { border-color: rgba(245,158,11,0.5); }
+
+    .aq-card-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .aq-card-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .aq-card-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary, #94a3b8);
+      margin-bottom: 24px;
+    }
+
+    /* QR box */
+    .aq-qr-box {
+      display: inline-block;
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .aq-qr-box canvas, .aq-qr-box img { display: block; }
+
+    /* URL chip */
+    .aq-url-chip {
+      display: inline-block;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      font-family: 'Inter', monospace;
+      margin-bottom: 20px;
+      word-break: break-all;
+    }
+
+    /* Download btn */
+    .aq-dl-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 100px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      font-family: 'Outfit', sans-serif;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .aq-dl-btn:hover { transform: translateY(-2px); }
+    .btn-admin  { background: linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; box-shadow:0 4px 18px rgba(37,99,235,0.35); }
+    .btn-admin:hover  { box-shadow:0 8px 28px rgba(37,99,235,0.5); }
+    .btn-monitor { background: linear-gradient(135deg,#f59e0b,#d97706); color:#000; box-shadow:0 4px 18px rgba(245,158,11,0.35); }
+    .btn-monitor:hover { box-shadow:0 8px 28px rgba(245,158,11,0.5); }
+
+    /* Warning */
+    .aq-warning {
+      background: rgba(244,63,94,0.07);
+      border: 1px solid rgba(244,63,94,0.25);
+      border-radius: 14px;
+      padding: 18px 22px;
+      text-align: center;
+      color: #fca5a5;
+      font-size: 0.875rem;
+      line-height: 1.6;
+      max-width: 580px;
+      margin: 0 auto;
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity:0; transform:translateY(24px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @media (max-width:640px) {
+      .aq-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-blob-2"></div>
+  <div class="container">
+
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="nav-logo">
+        <span class="nav-title">Voting Machine</span>
+      </div>
+      <div class="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/admin.html" class="nav-link">Admin Panel</a>
+      </div>
+    </nav>
+
+    <!-- Auth Guard -->
+    <div id="authGuard" style="display:none; text-align:center; padding:80px 20px; color:#f43f5e; font-size:1.1rem;">
+      🔒 Access denied. <a href="/" style="color:#60a5fa;">Go back</a>
+    </div>
+
+    <!-- Main Content (hidden until auth) -->
+    <main class="access-qr-main" id="mainContent" style="display:none;">
+
+      <div class="aq-hero">
+        <div class="aq-badge">🔑 Admin Only</div>
+        <h1 class="aq-title">Staff Access QR Codes</h1>
+        <p class="aq-sub">Print or save these QR codes. Each code only opens the intended panel — they are not interchangeable.</p>
+      </div>
+
+      <div class="aq-grid">
+
+        <!-- ADMIN QR -->
+        <div class="aq-card aq-card-admin" style="animation-delay:0s;">
+          <div class="aq-card-icon">🛡️</div>
+          <div class="aq-card-title">Admin Panel</div>
+          <div class="aq-card-desc">Scan to open the Admin dashboard login</div>
+          <div class="aq-qr-box">
+            <div id="adminQR"></div>
+          </div>
+          <div class="aq-url-chip" id="adminUrlDisplay">—</div><br>
+          <button class="aq-dl-btn btn-admin" onclick="downloadQRCode('adminQR', 'Admin_Panel_QR')">
+            ⬇ Download Admin QR
+          </button>
+        </div>
+
+        <!-- MONITOR QR -->
+        <div class="aq-card aq-card-monitor" style="animation-delay:0.12s;">
+          <div class="aq-card-icon">📊</div>
+          <div class="aq-card-title">Monitoring Panel</div>
+          <div class="aq-card-desc">Scan to open the Monitoring dashboard login</div>
+          <div class="aq-qr-box">
+            <div id="monitorQR"></div>
+          </div>
+          <div class="aq-url-chip" id="monitorUrlDisplay">—</div><br>
+          <button class="aq-dl-btn btn-monitor" onclick="downloadQRCode('monitorQR', 'Monitor_Panel_QR')">
+            ⬇ Download Monitor QR
+          </button>
+        </div>
+
+      </div>
+
+      <div class="aq-warning">
+        🔒 Keep these QR codes confidential. The Admin QR only opens the Admin login. The Monitor QR only opens the Monitoring login. They cannot access each other's panel.
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-bottom">
+        <p>&copy; 2026 Voting Machine. Admin use only.</p>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // ============ AUTH GUARD ============
+    // This page requires an active admin session to view
+    const adminPassword = sessionStorage.getItem('adminPassword');
+
+    if (!adminPassword) {
+      document.getElementById('authGuard').style.display = 'block';
+    } else {
+      document.getElementById('mainContent').style.display = '';
+      generateQRCodes();
+    }
+
+    // ============ GENERATE QR CODES ============
+    function generateQRCodes() {
+      const base = window.location.origin;
+
+      const adminUrl   = base + '/admin';
+      const monitorUrl = base + '/monitor';
+
+      document.getElementById('adminUrlDisplay').textContent   = adminUrl;
+      document.getElementById('monitorUrlDisplay').textContent = monitorUrl;
+
+      // Admin QR — blue tint
+      new QRCode(document.getElementById('adminQR'), {
+        text: adminUrl,
+        width: 220,
+        height: 220,
+        colorDark: '#1e3a8a',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      // Monitor QR — amber tint
+      new QRCode(document.getElementById('monitorQR'), {
+        text: monitorUrl,
+        width: 220,
+        height: 220,
+        colorDark: '#78350f',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    }
+
+    // ============ DOWNLOAD QR ============
+    function downloadQRCode(containerId, filename) {
+      const container = document.getElementById(containerId);
+      const canvas = container.querySelector('canvas');
+      const img    = container.querySelector('img');
+
+      // Create output canvas with label
+      const out = document.createElement('canvas');
+      const SIZE = 280;
+      out.width  = SIZE;
+      out.height = SIZE + 60;
+      const ctx = out.getContext('2d');
+
+      // White background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, out.width, out.height);
+
+      const draw = (src) => {
+        ctx.drawImage(src, 30, 15, SIZE - 60, SIZE - 60);
+
+        // Label
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 16px Outfit, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(
+          filename.replace('_', ' ').replace('_QR', ''),
+          out.width / 2,
+          SIZE - 30
+        );
+        ctx.font = '11px Inter, sans-serif';
+        ctx.fillStyle = '#64748b';
+        ctx.fillText('Voting Machine – Official Access', out.width / 2, SIZE - 12);
+
+        out.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename + '.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 2000);
+        }, 'image/png');
+      };
+
+      if (canvas) {
+        draw(canvas);
+      } else if (img) {
+        const tempImg = new Image();
+        tempImg.crossOrigin = 'anonymous';
+        tempImg.onload = () => draw(tempImg);
+        tempImg.src = img.src;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -234,6 +234,14 @@ app.get('/candidates.html', (req, res) => {
   res.sendFile(path.join(__dirname, '../public', 'candidates.html'));
 });
 
+// Route: Access QR codes page (staff-only, protected by client session)
+app.get('/access-qr', (req, res) => res.redirect('/access-qr.html'));
+app.get('/access-qr.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public', 'access-qr.html'));
+});
+
+
+
 
 
 // API: Verify Voter ID
