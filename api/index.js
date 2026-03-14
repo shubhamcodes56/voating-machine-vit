@@ -422,6 +422,28 @@ app.get('/api/all-votes', async (req, res) => {
   }
 });
 
+// API: Delete all votes (PASSWORD PROTECTED - ADMIN ONLY)
+app.delete('/api/votes/all', async (req, res) => {
+  try {
+    if (!ADMIN_PASSWORD) {
+      return res.status(503).json({ message: 'Admin not configured on this server' });
+    }
+
+    const providedPassword = req.headers['x-admin-password'];
+    if (providedPassword !== ADMIN_PASSWORD) {
+      return res.status(401).json({ message: 'Unauthorized: Invalid admin password' });
+    }
+
+    const result = await Vote.deleteMany({});
+    console.warn(`🚨 ADMIN ACTION: All votes deleted. Removed ${result.deletedCount} records.`);
+
+    res.json({ success: true, message: `Successfully deleted all ${result.deletedCount} votes.`, deletedCount: result.deletedCount });
+  } catch (error) {
+    console.error('Delete all votes error:', error);
+    res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+});
+
 // API: Delete a vote (PASSWORD PROTECTED - ADMIN ONLY)
 app.delete('/api/vote/:id', async (req, res) => {
   try {
