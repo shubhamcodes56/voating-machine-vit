@@ -458,3 +458,42 @@ window.addEventListener('click', (e) => {
     closeEditModal();
   }
 });
+
+// ============ DELETE ALL VOTES ============
+async function confirmDeleteAllVotes() {
+  const confirmation = prompt('⚠️ WARNING: This will PERMANENTLY delete all recorded votes. This action cannot be undone.\n\nTo proceed, type "DELETE" below:');
+  
+  if (confirmation !== 'DELETE') {
+    if (confirmation !== null) {
+      alert('Delete action aborted. You must type exactly "DELETE" to confirm.');
+    }
+    return;
+  }
+
+  const btn = document.getElementById('deleteAllBtn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '🗑️ Deleting...';
+  btn.disabled = true;
+
+  try {
+    const response = await fetch('/api/votes/all', {
+      method: 'DELETE',
+      headers: { 'x-admin-password': adminPassword }
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert('✅ All votes have been successfully deleted.');
+      loadAllVotes(); // Refresh UI to show empty state
+    } else {
+      alert(`❌ Failed to delete votes: ${data.message || 'Unknown error'}`);
+    }
+  } catch (error) {
+    console.error('Error deleting all votes:', error);
+    alert('❌ A network error occurred while trying to delete votes.');
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
