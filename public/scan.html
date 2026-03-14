@@ -4,208 +4,125 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>QR Scanner - Voting Machine</title>
-  <!-- jsQR - lightweight, pure JS, works OFFLINE, no framework needed -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
+    * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      background: #04091A;
-      color: #fff;
+      background:#04091A; color:#fff;
       font-family: system-ui, -apple-system, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 16px;
-      padding-top: 56px;
+      min-height:100vh; display:flex; flex-direction:column;
+      align-items:center; gap:12px;
+      padding:60px 14px 20px;
     }
-
     h1 {
-      font-size: 1.5rem;
-      font-weight: 900;
-      background: linear-gradient(135deg, #fff 30%, #3b82f6 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      text-align: center;
-      margin-bottom: 4px;
+      font-size:1.4rem; font-weight:900;
+      background:linear-gradient(135deg,#fff 30%,#3b82f6 100%);
+      -webkit-background-clip:text; background-clip:text;
+      -webkit-text-fill-color:transparent; text-align:center;
     }
-
-    .sub {
-      color: #64748b;
-      font-size: 0.82rem;
-      text-align: center;
-      margin-bottom: 16px;
+    /* ── HTTPS Warning ── */
+    #https-warn {
+      display:none; width:100%; max-width:440px;
+      background:#7f1d1d; border:1px solid #ef4444;
+      border-radius:12px; padding:12px 14px;
+      font-size:0.82rem; color:#fca5a5; line-height:1.5;
     }
-
-    /* Video container */
+    /* ── Camera ── */
     .cam-wrap {
-      position: relative;
-      width: 100%;
-      max-width: 420px;
-      border-radius: 18px;
-      overflow: hidden;
-      background: #000;
-      border: 2px solid rgba(59,130,246,0.4);
-      box-shadow: 0 0 40px rgba(59,130,246,0.2);
+      position:relative; width:100%; max-width:440px;
+      border-radius:18px; overflow:hidden;
+      background:#000; aspect-ratio:4/3;
+      border:2px solid rgba(59,130,246,0.4);
+      box-shadow:0 0 40px rgba(59,130,246,0.18);
     }
-
-    #v {
-      width: 100%;
-      display: block;
-      /* IMPORTANT: do NOT set height - let native aspect ratio show */
-    }
-
-    /* Corner brackets overlay */
-    .corners {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-    }
-
-    .corners::before,
-    .corners::after {
-      content: '';
-      position: absolute;
-      width: 50px;
-      height: 50px;
-      border-color: #3b82f6;
-      border-style: solid;
-    }
-
-    .corners::before {
-      top: 16px; left: 16px;
-      border-width: 4px 0 0 4px;
-      border-radius: 6px 0 0 0;
-    }
-
-    .corners::after {
-      bottom: 16px; right: 16px;
-      border-width: 0 4px 4px 0;
-      border-radius: 0 0 6px 0;
-    }
-
-    /* Scan line */
+    #v { width:100%; height:100%; object-fit:cover; display:block; }
     .scan-line {
-      position: absolute;
-      left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, #3b82f6, transparent);
-      animation: sweep 1.8s ease-in-out infinite;
-      pointer-events: none;
-      box-shadow: 0 0 8px #3b82f6;
+      position:absolute; left:0; right:0; height:3px;
+      background:linear-gradient(90deg,transparent,#3b82f6,transparent);
+      box-shadow:0 0 10px #3b82f6;
+      animation:sweep 1.6s ease-in-out infinite;
     }
-
-    @keyframes sweep {
-      0%   { top: 10%; }
-      50%  { top: 88%; }
-      100% { top: 10%; }
+    @keyframes sweep { 0%{top:5%} 50%{top:92%} 100%{top:5%} }
+    .corners {
+      position:absolute; inset:0; pointer-events:none;
     }
-
-    /* Status */
+    .corners::before,.corners::after {
+      content:''; position:absolute;
+      width:48px; height:48px;
+      border-color:#3b82f6; border-style:solid;
+    }
+    .corners::before { top:14px; left:14px; border-width:4px 0 0 4px; border-radius:6px 0 0 0; }
+    .corners::after  { bottom:14px; right:14px; border-width:0 4px 4px 0; border-radius:0 0 6px 0; }
+    /* ── Status ── */
     .sbar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.09);
-      border-radius: 12px;
-      padding: 12px 15px;
-      margin-top: 12px;
-      width: 100%;
-      max-width: 420px;
+      display:flex; align-items:center; gap:10px;
+      background:rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.09);
+      border-radius:12px; padding:11px 14px;
+      width:100%; max-width:440px;
     }
-
     .dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: #22c55e;
-      box-shadow: 0 0 8px #22c55e;
-      flex-shrink: 0;
-      animation: pulse 1s ease-in-out infinite;
+      width:10px; height:10px; border-radius:50%;
+      flex-shrink:0; animation:p 1s ease-in-out infinite;
+      background:#22c55e; box-shadow:0 0 8px #22c55e;
     }
-
-    .dot.loading { background:#f59e0b; box-shadow:0 0 8px #f59e0b; }
-    .dot.err     { background:#ef4444; box-shadow:0 0 8px #ef4444; animation:none; }
-    .dot.ok      { background:#6366f1; box-shadow:0 0 14px #6366f1; animation:none; }
-
-    @keyframes pulse {
-      0%,100% { transform: scale(1); opacity:1; }
-      50%      { transform: scale(0.5); opacity:0.4; }
+    .dot.spin  { background:#f59e0b; box-shadow:0 0 8px #f59e0b; }
+    .dot.err   { background:#ef4444; box-shadow:0 0 8px #ef4444; animation:none; }
+    .dot.ready { background:#3b82f6; box-shadow:0 0 14px #3b82f6; animation:none; }
+    @keyframes p { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(.4);opacity:.3} }
+    #stxt { font-size:0.8rem; color:#94a3b8; flex:1; }
+    /* ── Manual fallback ── */
+    .manual {
+      width:100%; max-width:440px;
+      background:rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.09);
+      border-radius:14px; padding:14px;
     }
-
-    #stxt { font-size: 0.82rem; color: #94a3b8; flex: 1; }
-
-    /* Debug log */
+    .manual p { font-size:0.78rem; color:#64748b; margin-bottom:8px; text-align:center; }
+    .manual-row { display:flex; gap:8px; }
+    #manual-in {
+      flex:1; background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:10px; padding:10px 12px;
+      color:#fff; font-size:0.9rem; font-family:inherit;
+      text-transform:uppercase;
+    }
+    #manual-in::placeholder { color:#475569; }
+    #manual-btn {
+      padding:10px 20px;
+      background:linear-gradient(135deg,#1d4ed8,#3b82f6);
+      border:none; color:#fff; border-radius:10px;
+      cursor:pointer; font-size:0.9rem; font-weight:700;
+      font-family:inherit;
+    }
+    /* ── Log ── */
     #dbg {
-      width: 100%;
-      max-width: 420px;
-      margin-top: 8px;
-      background: rgba(0,0,0,0.45);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-family: monospace;
-      font-size: 0.68rem;
-      max-height: 90px;
-      overflow-y: auto;
-      color: #475569;
+      width:100%; max-width:440px;
+      background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.06);
+      border-radius:10px; padding:8px 10px;
+      font-family:monospace; font-size:0.67rem;
+      max-height:85px; overflow-y:auto; color:#475569;
     }
-
-    /* Success flash */
+    /* ── Success ── */
     #success {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(16,185,129,0.18);
-      backdrop-filter: blur(10px);
-      z-index: 9999;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      animation: fi 0.15s ease;
+      display:none; position:fixed; inset:0;
+      background:rgba(16,185,129,.2);
+      backdrop-filter:blur(12px); z-index:9999;
+      flex-direction:column; align-items:center; justify-content:center; gap:12px;
+      animation:fi .15s ease;
     }
-
-    #success.on { display: flex; }
-
-    @keyframes fi { from { opacity:0; } to { opacity:1; } }
-
-    .s-icon { font-size: 5rem; animation: pop 0.35s cubic-bezier(0.34,1.56,0.64,1); }
-
-    @keyframes pop { from { transform:scale(0.05); opacity:0; } to { transform:scale(1); opacity:1; } }
-
+    #success.on { display:flex; }
+    @keyframes fi { from{opacity:0} to{opacity:1} }
+    .s-icon { font-size:5rem; animation:pop .35s cubic-bezier(.34,1.56,.64,1); }
+    @keyframes pop { from{transform:scale(.05);opacity:0} to{transform:scale(1);opacity:1} }
     .s-title { font-size:1.7rem; font-weight:900; color:#4ade80; }
-    .s-sub   { color:#86efac; font-size:0.9rem; }
-
-    /* Retry button */
-    #retry-btn {
-      display: none;
-      margin-top: 10px;
-      padding: 11px 28px;
-      background: linear-gradient(135deg, #1d4ed8, #2563eb);
-      border: none;
-      color: #fff;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 0.95rem;
-      font-weight: 700;
-      font-family: inherit;
-    }
-
+    .s-sub   { color:#86efac; font-size:.9rem; }
     .back {
-      position: fixed;
-      top: 14px; left: 14px;
-      color: #64748b;
-      text-decoration: none;
-      font-size: 0.78rem;
-      padding: 6px 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.07);
-      background: rgba(255,255,255,0.03);
-      z-index: 100;
+      position:fixed; top:13px; left:13px; color:#64748b;
+      text-decoration:none; font-size:.75rem;
+      padding:6px 11px; border-radius:9px;
+      border:1px solid rgba(255,255,255,.07);
+      background:rgba(255,255,255,.03); z-index:200;
     }
   </style>
 </head>
@@ -213,15 +130,23 @@
 
 <a href="/" class="back">← Home</a>
 
-<!-- Success overlay -->
+<!-- Success -->
 <div id="success">
   <div class="s-icon">✅</div>
   <div class="s-title">QR Scanned!</div>
-  <div class="s-sub" id="sid">Redirecting to voting...</div>
+  <div class="s-sub" id="sid">Redirecting…</div>
 </div>
 
 <h1>📷 Show Your QR Code</h1>
-<p class="sub">Hold your QR code in front of the camera</p>
+
+<!-- HTTPS warning - shown when camera won't work -->
+<div id="https-warn">
+  ⚠️ <strong>Camera blocked by browser!</strong><br>
+  Mobile browsers require <strong>HTTPS</strong> to access the camera.<br>
+  You're on HTTP. Either:<br>
+  • Access via <code>localhost</code> on this device<br>
+  • Or use the manual entry below ↓
+</div>
 
 <div class="cam-wrap">
   <video id="v" autoplay muted playsinline></video>
@@ -229,20 +154,25 @@
   <div class="scan-line"></div>
 </div>
 
-<!-- Hidden canvas for frame processing - NEVER shown to user -->
 <canvas id="c" style="display:none"></canvas>
 
 <div class="sbar">
-  <div class="dot loading" id="dot"></div>
+  <div class="dot spin" id="dot"></div>
   <span id="stxt">Starting camera…</span>
 </div>
 
-<button id="retry-btn" onclick="boot()">🔄 Retry Camera</button>
+<!-- Manual voter ID entry fallback -->
+<div class="manual">
+  <p>📝 Camera not working? Enter Voter ID manually:</p>
+  <div class="manual-row">
+    <input id="manual-in" type="text" placeholder="e.g. VID001 or 001" autocomplete="off" spellcheck="false">
+    <button id="manual-btn" onclick="manualSubmit()">Go →</button>
+  </div>
+</div>
 
 <div id="dbg"></div>
 
 <script>
-  // ─── DOM refs ──────────────────────────────────────────────────────────────
   const vid     = document.getElementById('v');
   const canvas  = document.getElementById('c');
   const ctx     = canvas.getContext('2d', { willReadFrequently: true });
@@ -251,110 +181,135 @@
   const dbg     = document.getElementById('dbg');
   const success = document.getElementById('success');
   const sidEl   = document.getElementById('sid');
-  const retryBtn= document.getElementById('retry-btn');
+  const warnEl  = document.getElementById('https-warn');
+  const manIn   = document.getElementById('manual-in');
 
-  let stream    = null;
-  let rafId     = null;
-  let done      = false;
-  let loopCount = 0;
+  let stream = null, rafId = null, done = false, frame = 0;
+  const hasNative = typeof BarcodeDetector !== 'undefined';
+  let nativeDetector = null;
 
-  // ─── Logging ───────────────────────────────────────────────────────────────
+  // ── Logging ────────────────────────────────────────────────────────────────
   function log(msg, color) {
     const el = document.createElement('div');
     el.style.color = color || '#475569';
-    const t = new Date().toLocaleTimeString('en', { hour12: false });
-    el.textContent = t + ' ' + msg;
+    el.textContent = new Date().toLocaleTimeString('en',{hour12:false}) + ' ' + msg;
     dbg.appendChild(el);
     dbg.scrollTop = dbg.scrollHeight;
-    if (dbg.children.length > 30) dbg.removeChild(dbg.firstChild);
+    if (dbg.children.length > 25) dbg.removeChild(dbg.firstChild);
   }
 
   function setStatus(cls, msg) {
-    dot.className  = 'dot ' + (cls || '');
+    dot.className = 'dot ' + (cls || '');
     stxt.textContent = msg;
   }
 
-  // ─── Redirect handler ──────────────────────────────────────────────────────
+  // ── Normalize voter ID ─────────────────────────────────────────────────────
+  // QR encodes "001" (ultra-short). Scanner prepends "VID" to get "VID001".
+  // Also accepts full "VID001" directly (from older QR codes).
+  function normalize(raw) {
+    let s = raw.trim().toUpperCase();
+    // If it's purely numeric or "001" style → prepend VID
+    if (/^\d+$/.test(s)) {
+      s = 'VID' + s.padStart(3, '0');
+    }
+    // Remove any surrounding quotes
+    s = s.replace(/^["']+|["']+$/g, '');
+    return s;
+  }
+
+  // ── Redirect ───────────────────────────────────────────────────────────────
   function onDetected(rawText) {
     if (done) return;
     done = true;
-
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
     if (stream) stream.getTracks().forEach(t => t.stop());
 
-    // QR codes from qr.js contain only the voter ID (e.g. "VID001")
-    const vid_str = rawText.trim().toUpperCase();
-
-    log('✅ DETECTED: ' + vid_str, '#4ade80');
-    setStatus('ok', 'Scanned! Redirecting…');
+    const vid_str = normalize(rawText);
+    log('✅ ' + rawText + ' → ' + vid_str, '#4ade80');
+    setStatus('ready', 'Redirecting…');
     sidEl.textContent = 'Voter ID: ' + vid_str;
     success.classList.add('on');
-
-    setTimeout(() => {
-      window.location.href = '/?vid=' + encodeURIComponent(vid_str);
-    }, 150);
+    setTimeout(() => { window.location.href = '/?vid=' + encodeURIComponent(vid_str); }, 150);
   }
 
-  // ─── Core scan loop ────────────────────────────────────────────────────────
-  function scanFrame() {
+  // ── Manual entry ───────────────────────────────────────────────────────────
+  function manualSubmit() {
+    const val = manIn.value.trim();
+    if (!val) { manIn.focus(); return; }
+    onDetected(val);
+  }
+  manIn.addEventListener('keypress', e => { if (e.key === 'Enter') manualSubmit(); });
+
+  // ── Native BarcodeDetector scan (fastest on Android Chrome) ────────────────
+  async function nativeScan() {
     if (done) return;
-
-    if (vid.readyState >= vid.HAVE_ENOUGH_DATA && vid.videoWidth > 0) {
-      canvas.width  = vid.videoWidth;
-      canvas.height = vid.videoHeight;
-      ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
-
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-      // jsQR: tries to find a QR in every frame
-      const code = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: 'dontInvert'   // fastest: only normal (dark on light)
-      });
-
-      if (code) {
-        onDetected(code.data);
-        return;
-      }
-
-      // Every 3rd frame, also try inverted (light on dark QR)
-      if (loopCount % 3 === 0) {
-        const code2 = jsQR(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: 'onlyInvert'
-        });
-        if (code2) { onDetected(code2.data); return; }
-      }
-
-      loopCount++;
+    if (vid.readyState < vid.HAVE_ENOUGH_DATA || vid.videoWidth === 0) {
+      rafId = requestAnimationFrame(nativeScan);
+      return;
     }
-
-    rafId = requestAnimationFrame(scanFrame);
+    try {
+      const codes = await nativeDetector.detect(vid);
+      if (codes.length > 0) { onDetected(codes[0].rawValue); return; }
+    } catch(e) { /* ignore */ }
+    rafId = requestAnimationFrame(nativeScan);
   }
 
-  // ─── Camera start ──────────────────────────────────────────────────────────
+  // ── jsQR scan loop (all browsers fallback) ─────────────────────────────────
+  function jsqrScan() {
+    if (done) return;
+    if (vid.readyState >= vid.HAVE_ENOUGH_DATA && vid.videoWidth > 0) {
+      const W = vid.videoWidth, H = vid.videoHeight;
+      canvas.width = W; canvas.height = H;
+      ctx.drawImage(vid, 0, 0, W, H);
+      const img = ctx.getImageData(0, 0, W, H);
+
+      // Try normal orientation
+      let code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' });
+      if (code) { onDetected(code.data); return; }
+    }
+    rafId = requestAnimationFrame(jsqrScan);
+  }
+
+  // ── Boot ───────────────────────────────────────────────────────────────────
   async function boot() {
     done = false;
-    retryBtn.style.display = 'none';
-    setStatus('loading', 'Requesting camera…');
-    log('📷 Requesting camera…');
+    setStatus('spin', 'Starting camera…');
+    log('🔍 Engine: ' + (hasNative ? 'Native BarcodeDetector ✅' : 'jsQR'));
 
-    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-    if (rafId)  { cancelAnimationFrame(rafId); rafId = null; }
+    // Show HTTPS warning if camera will likely be blocked
+    const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    if (!isSecure) {
+      warnEl.style.display = 'block';
+      log('⚠️ Not HTTPS — camera may be blocked on mobile', '#fca5a5');
+    }
+
+    // Init native detector if available
+    if (hasNative) {
+      try {
+        nativeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+        log('✅ Native BarcodeDetector ready');
+      } catch(e) {
+        log('⚠ Native init failed: ' + e.message, '#fbbf24');
+      }
+    }
 
     // Check jsQR loaded
     if (typeof jsQR === 'undefined') {
-      setStatus('err', 'jsQR library failed to load. Check internet.');
-      log('❌ jsQR not loaded', '#fca5a5');
-      retryBtn.style.display = 'inline-block';
+      log('❌ jsQR not loaded — CDN issue?', '#fca5a5');
+      setStatus('err', 'Library load failed — check internet');
       return;
+    } else {
+      log('✅ jsQR ready');
     }
 
     try {
-      // Ideal constraints — browser will fall back gracefully
+      if (stream) stream.getTracks().forEach(t => t.stop());
+
       stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: { ideal: 'environment' },
-          width:  { ideal: 1280 },
-          height: { ideal: 720 }
+          facingMode:  { ideal: 'environment' },
+          width:       { ideal: 1280 },
+          height:      { ideal: 720 }
         },
         audio: false
       });
@@ -362,29 +317,37 @@
       vid.srcObject = stream;
       await vid.play();
 
-      const track = stream.getVideoTracks()[0];
-      const s = track.getSettings();
-      log(`✅ Camera: ${s.width}×${s.height} ${s.facingMode || ''}`, '#93c5fd');
-      setStatus('', '🔍 Scanning — hold QR steady, fill the frame');
+      const s = stream.getVideoTracks()[0].getSettings();
+      log(`📷 ${s.width}×${s.height} ${s.facingMode||''}`, '#93c5fd');
+      setStatus('', '🔍 Scanning — show QR code');
 
-      // Small pause to let camera focus then start scanning
-      setTimeout(() => { rafId = requestAnimationFrame(scanFrame); }, 400);
+      // Slight pause for camera to focus
+      setTimeout(() => {
+        if (nativeDetector) {
+          log('▶️ Using Native scanner');
+          rafId = requestAnimationFrame(nativeScan);
+        } else {
+          log('▶️ Using jsQR scanner');
+          rafId = requestAnimationFrame(jsqrScan);
+        }
+      }, 300);
 
     } catch (err) {
-      log('❌ Camera error: ' + err.message, '#fca5a5');
-
+      log('❌ ' + err.name + ': ' + err.message, '#fca5a5');
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setStatus('err', 'Camera permission denied — enable in browser settings');
+        setStatus('err', 'Camera permission denied');
+        log('👉 Use the manual entry below to vote without camera', '#fbbf24');
+        if (!isSecure) {
+          warnEl.style.display = 'block';
+        }
       } else if (err.name === 'NotFoundError') {
         setStatus('err', 'No camera found on this device');
       } else {
-        setStatus('err', 'Camera error: ' + err.message);
+        setStatus('err', err.message);
       }
-      retryBtn.style.display = 'inline-block';
     }
   }
 
-  // ─── Auto-start ────────────────────────────────────────────────────────────
   boot();
 </script>
 

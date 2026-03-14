@@ -81,10 +81,20 @@ app.get('/scan.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'scan.html'));
 });
 
+// Normalize voter ID: accept "001" (from new ultra-simple QR) or "VID001" (full format)
+function normalizeVoterId(id) {
+  if (!id) return id;
+  const s = id.toString().trim().toUpperCase();
+  // If purely numeric, prepend VID prefix
+  if (/^\d+$/.test(s)) return 'VID' + s.padStart(3, '0');
+  return s;
+}
+
 // API: Verify Voter ID
 app.post('/api/verify-voter-id', async (req, res) => {
   try {
-    const { voterId } = req.body;
+    const raw = req.body.voterId;
+    const voterId = normalizeVoterId(raw);
 
     if (!voterId) {
       return res.status(400).json({ message: 'Voter ID is required' });
@@ -93,7 +103,7 @@ app.post('/api/verify-voter-id', async (req, res) => {
     // If a list of valid voter IDs exists, enforce it.
     if (Array.isArray(VALID_VOTER_IDS) && VALID_VOTER_IDS.length > 0) {
       if (!VALID_VOTER_IDS.includes(voterId)) {
-        return res.status(401).json({ message: 'Invalid Voter ID' });
+        return res.status(401).json({ message: 'Invalid Voter ID: ' + voterId });
       }
     }
 
@@ -107,7 +117,7 @@ app.post('/api/verify-voter-id', async (req, res) => {
     res.json({
       success: true,
       message: 'Voter ID verified successfully!',
-      voterId: voterId
+      voterId: voterId  // always return normalized format
     });
   } catch (error) {
     console.error('Verify error:', error);
@@ -118,7 +128,8 @@ app.post('/api/verify-voter-id', async (req, res) => {
 // API: Submit a vote
 app.post('/api/vote', async (req, res) => {
   try {
-    const { option, name, voterId } = req.body;
+    const { option, name } = req.body;
+    const voterId = normalizeVoterId(req.body.voterId);
 
     if (!option) {
       return res.status(400).json({ message: 'Candidate is required' });

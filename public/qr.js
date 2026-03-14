@@ -20,14 +20,17 @@ function generateQR() {
   qrInstance = null;
 
   try {
-    // CRITICAL: encode ONLY the raw ID. No spaces, no labels.
-    // ECC Level L = fewest error-correction modules = BIGGEST squares = EASIEST scan.
+    // ULTRA-SIMPLE: encode ONLY the numeric part, e.g. "001" from "VID001"
+    // 3 digits = QR Version 1 (21x21 grid) = MAXIMUM square size = EASIEST to scan from distance
+    // ECC Level L = least error-correction overhead = biggest data squares
+    const numericPart = voterId.replace(/[^0-9]/g, '').padStart(3, '0') || voterId;
+
     qrInstance = new QRCode(container, {
-      text:         voterId,    // e.g. "VID001"
-      width:        500,        // render large for display
+      text:         numericPart, // e.g. "001" — ultra short!
+      width:        500,
       height:       500,
-      colorDark:    '#000000',  // pure black (mandatory)
-      colorLight:   '#ffffff',  // pure white (mandatory)
+      colorDark:    '#000000',   // pure black
+      colorLight:   '#ffffff',   // pure white
       correctLevel: QRCode.CorrectLevel.L
     });
   } catch (err) {
