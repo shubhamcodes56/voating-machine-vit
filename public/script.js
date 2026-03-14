@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check voting MODE first (is session open?) then status (is voting paused?)
   checkVotingMode();
   checkVotingStatus();
+  loadCandidates();
 
   // Poll every 5 seconds for live updates
   setInterval(checkVotingMode, 5000);
@@ -276,6 +277,50 @@ function showVoterIdError(message) {
   voterIdErrorMessage.textContent = '✗ ' + message;
   voterIdErrorMessage.style.display = 'flex';
   voterIdSuccessMessage.style.display = 'none';
+}
+
+// ============ LOAD CANDIDATES ============
+async function loadCandidates() {
+  const container = document.getElementById('candidateListContainer');
+  try {
+    const resp = await fetch('/api/candidates');
+    const candidates = await resp.json();
+    
+    if (resp.ok) {
+      renderCandidatesList(candidates);
+    } else {
+      container.innerHTML = `<div style="color: #fca5a5; padding: 20px; text-align: center;">Error: ${candidates.error || 'Failed to load'}</div>`;
+    }
+  } catch (err) {
+    container.innerHTML = `<div style="color: #fca5a5; padding: 20px; text-align: center;">Network Error: Failed to load candidates</div>`;
+  }
+}
+
+function renderCandidatesList(candidates) {
+  const container = document.getElementById('candidateListContainer');
+  if (!candidates || candidates.length === 0) {
+    container.innerHTML = '<div style="color: #64748b; padding: 20px; text-align: center;">No candidates currently registered.</div>';
+    return;
+  }
+
+  container.innerHTML = candidates.map((cand, idx) => `
+    <label class="radio-card">
+      <input type="radio" name="candidateName" value="${escapeHtml(cand.name)}">
+      <div class="candidate-info">
+        <img src="${cand.photo}" alt="${escapeHtml(cand.name)}" class="candidate-img" 
+             onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(cand.name)}&background=4F46E5&color=fff'">
+        <span class="candidate-name">${escapeHtml(cand.name)}</span>
+        <span class="candidate-party" style="font-size: 0.75rem; color: #94A3B8; margin-top: 2px;">${escapeHtml(cand.party)}</span>
+      </div>
+      <span class="radio-custom"></span>
+    </label>
+  `).join('');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 // ============ SUBMIT VOTE ============

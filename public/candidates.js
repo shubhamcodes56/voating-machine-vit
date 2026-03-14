@@ -1,76 +1,52 @@
-// ============ CANDIDATES DATA ============
-// Update this list with your real candidates' info.
-// For photos: use a URL (https://...) or a relative path (images/alice.jpg)
-// For agenda: list 3-4 key points
-
-const CANDIDATES = [
-  {
-    name: "Alice Smith",
-    party: "Progress Party",
-    photo: "https://ui-avatars.com/api/?name=Alice+Smith&background=4F46E5&color=fff&size=200&rounded=true&bold=true",
-    agenda: [
-      "Improve campus infrastructure",
-      "Increase scholarship funds",
-      "Digital-first academic experience",
-      "24/7 library access"
-    ]
-  },
-  {
-    name: "Bob Jones",
-    party: "Student Unity",
-    photo: "https://ui-avatars.com/api/?name=Bob+Jones&background=0891b2&color=fff&size=200&rounded=true&bold=true",
-    agenda: [
-      "Affordable canteen meals",
-      "Better transport connectivity",
-      "Stronger student grievance system",
-      "Sports & wellness programs"
-    ]
-  },
-  {
-    name: "Charlie Brown",
-    party: "Future Forward",
-    photo: "https://ui-avatars.com/api/?name=Charlie+Brown&background=059669&color=fff&size=200&rounded=true&bold=true",
-    agenda: [
-      "Greener campus initiative",
-      "Mental health support center",
-      "Industry internship portal",
-      "Student entrepreneurship fund"
-    ]
-  },
-  {
-    name: "Diana Prince",
-    party: "United Voice",
-    photo: "https://ui-avatars.com/api/?name=Diana+Prince&background=db2777&color=fff&size=200&rounded=true&bold=true",
-    agenda: [
-      "Equal opportunities for all",
-      "Expand women's safety measures",
-      "More cultural & arts events",
-      "Transparent student governance"
-    ]
-  }
-];
+// Candidates will be fetched from API
 
 // ============ RENDER CANDIDATES ============
-function renderCandidates() {
+async function renderCandidates() {
   const grid = document.getElementById('candidatesGrid');
   if (!grid) return;
 
-  grid.innerHTML = CANDIDATES.map((c, i) => `
-    <div class="cand-card" style="animation-delay: ${i * 0.1}s">
-      <span class="cand-number">#${i + 1}</span>
-      <div class="cand-photo-wrap">
-        <img class="cand-photo" src="${c.photo}" alt="${c.name}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=334155&color=fff&size=200&bold=true'">
-        <div class="cand-photo-glow"></div>
+  grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #94A3B8; padding: 40px;">Loading candidates...</div>';
+
+  try {
+    const resp = await fetch('/api/candidates');
+    const candidates = await resp.json();
+
+    if (!resp.ok) {
+      grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #fca5a5; padding: 40px;">Error: ${candidates.error || 'Failed to load'}</div>`;
+      return;
+    }
+
+    if (candidates.length === 0) {
+      grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 40px;">No candidates are registered yet for this election.</div>';
+      return;
+    }
+
+    grid.innerHTML = candidates.map((c, i) => `
+      <div class="cand-card" style="animation-delay: ${i * 0.1}s">
+        <span class="cand-number">#${i + 1}</span>
+        <div class="cand-photo-wrap">
+          <img class="cand-photo" src="${c.photo}" alt="${escapeHtml(c.name)}" 
+               onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=334155&color=fff&size=200&bold=true'">
+          <div class="cand-photo-glow"></div>
+        </div>
+        <div class="cand-name">${escapeHtml(c.name)}</div>
+        <div class="cand-party">${escapeHtml(c.party)}</div>
+        <div class="cand-divider"></div>
+        <div class="cand-agenda-title">Key Agenda</div>
+        <ul class="cand-agenda-list">
+          ${(c.agenda || []).map(a => `<li>${escapeHtml(a)}</li>`).join('')}
+        </ul>
       </div>
-      <div class="cand-name">${c.name}</div>
-      <div class="cand-party">${c.party}</div>
-      <div class="cand-divider"></div>
-      <div class="cand-agenda-title">Key Agenda</div>
-      <ul class="cand-agenda-list">
-        ${c.agenda.map(a => `<li>${a}</li>`).join('')}
-      </ul>
-    </div>
-  `).join('');
+    `).join('');
+  } catch (err) {
+    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #fca5a5; padding: 40px;">Network Error: Failed to load candidates</div>';
+  }
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 // ============ CHECK VOTING STATUS ============

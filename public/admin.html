@@ -75,6 +75,20 @@
           </div>
         </section>
 
+        <!-- ===== CANDIDATE MANAGEMENT ===== -->
+        <section class="candidate-management-section">
+          <div class="section-header-row">
+            <h2 class="section-title">Manage Candidates</h2>
+            <button class="refresh-btn" style="background: var(--primary); color: white;" onclick="openAddCandidateModal()">
+              ➕ Add New Candidate
+            </button>
+          </div>
+          <div id="candidateManagementGrid" class="candidate-admin-grid">
+            <!-- Candidate cards for editing will be injected here -->
+            <p style="text-align: center; color: #666; padding: 20px; grid-column: 1/-1;">Loading candidates...</p>
+          </div>
+        </section>
+
         <!-- Search & Filter -->
         <section class="search-section">
           <input type="text" id="searchBox" placeholder="Search by candidate or voter name..." class="search-input">
@@ -138,6 +152,40 @@
           <p>&copy; 2026 Voting Machine. All rights reserved. Designed for excellence.</p>
         </div>
       </footer>
+    </div>
+  </div>
+
+  <!-- Candidate Add/Edit Modal -->
+  <div id="candidateModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="candidateModalTitle">Add Candidate</h2>
+        <button class="close-btn" onclick="closeCandidateModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="candidateEditId">
+        <div class="input-group">
+          <label>Full Name</label>
+          <input type="text" id="candName" placeholder="e.g. Alice Smith" class="modal-input">
+        </div>
+        <div class="input-group">
+          <label>Party / Group Name</label>
+          <input type="text" id="candParty" placeholder="e.g. Unity Group" class="modal-input">
+        </div>
+        <div class="input-group">
+          <label>Photo URL</label>
+          <input type="text" id="candPhoto" placeholder="Link to image or UI-avatar" class="modal-input">
+        </div>
+        <div class="input-group">
+          <label>Agenda (One per line)</label>
+          <textarea id="candAgenda" placeholder="Digital Transformation&#10;Student Welfare" class="modal-input" style="min-height: 100px; resize: vertical;"></textarea>
+        </div>
+        <div class="modal-footer" style="display: flex; gap: 10px; margin-top: 20px;">
+          <button class="save-btn" onclick="saveCandidate()" style="flex: 1;">Save Candidate</button>
+          <button id="deleteCandidateBtn" class="vc-btn vc-btn-stop" onclick="deleteCandidate()" style="display: none; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #fca5a5; margin: 0; padding: 0 20px;">Delete</button>
+        </div>
+      </div>
+      <div id="candidateModalMessage" class="message" style="display: none; margin-top: 15px;"></div>
     </div>
   </div>
 

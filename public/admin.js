@@ -47,8 +47,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Load all votes and check voting mode on startup
-  await Promise.all([loadAllVotes(), checkVotingMode()]);
+  // Load data on startup
+  await Promise.all([loadAllVotes(), loadCandidates(), checkVotingMode()]);
 
   // Search functionality
   searchBox.addEventListener('input', filterVotes);
@@ -502,3 +502,154 @@ async function confirmDeleteAllVotes() {
     btn.disabled = false;
   }
 }
+// ============ CANDIDATE MANAGEMENT ============
+
+async function loadCandidates() {
+  const grid = document.getElementById('candidateManagementGrid');
+  try {
+    const resp = await fetch('/api/candidates');
+    const candidates = await resp.json();
+    
+    if (resp.ok) {
+      renderCandidates(candidates);
+    } else {
+      grid.innerHTML = `<p style="color: #fca5a5; padding: 20px;">Error: ${candidates.error || 'Failed to load'}</p>`;
+    }
+  } catch (err) {
+    grid.innerHTML = `<p style="color: #fca5a5; padding: 20px;">Network Error: Failed to load candidates</p>`;
+  }
+}
+
+function renderCandidates(candidates) {
+  const grid = document.getElementById('candidateManagementGrid');
+  if (candidates.length === 0) {
+    grid.innerHTML = '<p style="text-align: center; color: #666; padding: 20px; grid-column: 1/-1;">No candidates added yet</p>';
+    return;
+  }
+
+  grid.innerHTML = candidates.map(cand => `
+    <div class="cand-admin-card">
+      <img src="${cand.photo}" alt="${cand.name}" class="cand-admin-img" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(cand.name)}&background=2563EB&color=fff'">
+      <div class="cand-admin-info">
+        <div class="cand-admin-name">${escapeHtml(cand.name)}</div>
+        <div class="cand-admin-party">${escapeHtml(cand.party)}</div>
+      </div>
+      <div class="cand-admin-actions">
+        <button class="edit-btn" onclick='openEditCandidate(${JSON.stringify(cand).replace(/'/g, "&apos;")})'>Edit</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openAddCandidateModal() {
+  document.getElementById('candidateModalTitle').textContent = 'Add Candidate';
+  document.getElementById('candidateEditId').value = '';
+  document.getElementById('candName').value = '';
+  document.getElementById('candParty').value = '';
+  document.getElementById('candPhoto').value = '';
+  document.getElementById('candAgenda').value = '';
+  document.getElementById('deleteCandidateBtn').style.display = 'none';
+  
+  document.getElementById('candidateModal').style.display = 'flex';
+  document.getElementById('candidateModalMessage').style.display = 'none';
+}
+
+function openEditCandidate(cand) {
+  document.getElementById('candidateModalTitle').textContent = 'Edit Candidate';
+  document.getElementById('candidateEditId').value = cand._id;
+  document.getElementById('candName').value = cand.name;
+  document.getElementById('candParty').value = cand.party;
+  document.getElementById('candPhoto').value = cand.photo;
+  document.getElementById('candAgenda').value = (cand.agenda || []).join('\n');
+  document.getElementById('deleteCandidateBtn').style.display = 'block';
+  
+  document.getElementById('candidateModal').style.display = 'flex';
+  document.getElementById('candidateModalMessage').style.display = 'none';
+}
+
+function closeCandidateModal() {
+  document.getElementById('candidateModal').style.display = 'none';
+}
+
+async function saveCandidate() {
+  const id = document.getElementById('candidateEditId').value;
+  const data = {
+    name: document.getElementById('candName').value.trim(),
+    party: document.getElementById('candParty').value.trim(),
+    photo: document.getElementById('candPhoto').value.trim(),
+    agenda: document.getElementById('candAgenda').value.split('\n').filter(line => line.trim() !== '')
+  };
+
+  if (!data.name || !data.party || !data.photo) {
+    showCandidateMsg('Please fill in Name, Party, and Photo URL', 'error');
+    return;
+  }
+
+  const url = id ? `/api/candidates/${id}` : '/api/candidates';
+  const method = id ? 'PUT' : 'POST';
+
+  try {
+    const resp = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': adminPassword
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (resp.ok) {
+      showCandidateMsg(`Successfully ${id ? 'updated' : 'added'} candidate!`, 'success');
+      setTimeout(() => {
+        closeCandidateModal();
+        loadCandidates();
+      }, 1500);
+    } else {
+      const err = await resp.json();
+      showCandidateMsg(err.error || 'Failed to save candidate', 'error');
+    }
+  } catch (err) {
+    showCandidateMsg('Network error occurred', 'error');
+  }
+}
+
+async function deleteCandidate() {
+  const id = document.getElementById('candidateEditId').value;
+  if (!id) return;
+
+  if (!confirm('Are you sure you want to delete this candidate? This will not remove existing votes but may cause UI issues if this candidate has votes.')) {
+    return;
+  }
+
+  try {
+    const resp = await fetch(`/api/candidates/${id}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-password': adminPassword }
+    });
+
+    if (resp.ok) {
+      showCandidateMsg('Candidate deleted!', 'success');
+      setTimeout(() => {
+        closeCandidateModal();
+        loadCandidates();
+      }, 1500);
+    } else {
+      const err = await resp.json();
+      showCandidateMsg(err.error || 'Delete failed', 'error');
+    }
+  } catch (err) {
+    showCandidateMsg('Network error occurred', 'error');
+  }
+}
+
+function showCandidateMsg(msg, type) {
+  const el = document.getElementById('candidateModalMessage');
+  el.textContent = (type === 'error' ? '❌ ' : '✓ ') + msg;
+  el.className = 'message ' + (type === 'error' ? 'error-message' : 'success-message');
+  el.style.display = 'block';
+}
+
+// Close modals on outside click
+window.addEventListener('click', (e) => {
+  if (e.target.id === 'candidateModal') closeCandidateModal();
+});

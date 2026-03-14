@@ -101,43 +101,10 @@
               <!-- Candidate Selection -->
               <div class="input-group">
                 <label>Select Candidate</label>
-                <div class="radio-group">
-                  <label class="radio-card">
-                    <input type="radio" name="candidateName" value="Alice Smith">
-                    <div class="candidate-info">
-                      <img src="https://ui-avatars.com/api/?name=Alice+Smith&background=4F46E5&color=fff"
-                        alt="Alice Smith" class="candidate-img">
-                      <span class="candidate-name">Alice Smith</span>
-                    </div>
-                    <span class="radio-custom"></span>
-                  </label>
-                  <label class="radio-card">
-                    <input type="radio" name="candidateName" value="Bob Jones">
-                    <div class="candidate-info">
-                      <img src="https://ui-avatars.com/api/?name=Bob+Jones&background=06B6D4&color=fff" alt="Bob Jones"
-                        class="candidate-img">
-                      <span class="candidate-name">Bob Jones</span>
-                    </div>
-                    <span class="radio-custom"></span>
-                  </label>
-                  <label class="radio-card">
-                    <input type="radio" name="candidateName" value="Charlie Brown">
-                    <div class="candidate-info">
-                      <img src="https://ui-avatars.com/api/?name=Charlie+Brown&background=4F46E5&color=fff"
-                        alt="Charlie Brown" class="candidate-img">
-                      <span class="candidate-name">Charlie Brown</span>
-                    </div>
-                    <span class="radio-custom"></span>
-                  </label>
-                  <label class="radio-card">
-                    <input type="radio" name="candidateName" value="Diana Prince">
-                    <div class="candidate-info">
-                      <img src="https://ui-avatars.com/api/?name=Diana+Prince&background=06B6D4&color=fff"
-                        alt="Diana Prince" class="candidate-img">
-                      <span class="candidate-name">Diana Prince</span>
-                    </div>
-                    <span class="radio-custom"></span>
-                  </label>
+                <div class="radio-group" id="candidateListContainer">
+                  <div class="loading-candidates" style="color: var(--text-secondary); padding: 20px; text-align: center;">
+                    Loading candidates...
+                  </div>
                 </div>
               </div>
 

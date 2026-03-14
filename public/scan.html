@@ -157,15 +157,15 @@
   <div class="corners"></div>
   <div class="scan-line"></div>
   
-  <!-- MANDATORY USER GESTURE OVERLAY -->
-  <div id="start-overlay" style="position:absolute; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:50; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; transition: opacity 0.3s ease;">
-     <div style="font-size:4rem; filter: drop-shadow(0 0 15px rgba(59,130,246,0.5));">📸</div>
+  <!-- START OVERLAY - Hidden by default, shown only on hardware block -->
+  <div id="start-overlay" style="position:absolute; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:50; display:none; flex-direction:column; align-items:center; justify-content:center; gap:20px; transition: opacity 0.3s ease;">
+     <div style="font-size:4rem; filter: drop-shadow(0 0 15px rgba(239,68,68,0.5));">🤳</div>
      <div style="text-align:center; padding:0 30px;">
-        <h2 style="color:#fff; margin-bottom:8px; font-size:1.4rem;">Camera Ready</h2>
-        <p style="color:#94a3b8; font-size:0.9rem;">Tap below to start scanning. Your browser requires this manual step for security.</p>
+        <h2 style="color:#fff; margin-bottom:8px; font-size:1.4rem;">Camera Restricted</h2>
+        <p style="color:#94a3b8; font-size:0.9rem;">The browser blocked the camera auto-start. Tap below to fix this and start scanning.</p>
      </div>
-     <button id="start-btn" onclick="startScanning()" style="padding:16px 32px; background:linear-gradient(135deg,#3b82f6,#1d4ed8); border:none; border-radius:14px; color:#fff; font-weight:800; font-size:1.1rem; cursor:pointer; box-shadow:0 10px 30px rgba(59,130,246,0.4); transition: transform 0.1s;">
-       Start Scanner
+     <button id="start-btn" onclick="startScanning()" style="padding:16px 32px; background:linear-gradient(135deg,#3b82f6,#1d4ed8); border:none; border-radius:14px; color:#fff; font-weight:800; font-size:1.1rem; cursor:pointer; box-shadow:0 10px 30px rgba(59,130,246,0.4);">
+       Fix & Start Scanner
      </button>
   </div>
 </div>
@@ -477,17 +477,18 @@
       log('❌ ' + err.name + ': ' + err.message, '#fca5a5');
       
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError' || err.name === 'AbortError') {
-        setStatus('err', 'Hardware Lock detected. Fixing...');
-        log('🔄 Triggering Hardware Reset in 1s...', '#fbbf24');
+        setStatus('err', 'Browser blocked camera. Interaction needed.');
+        // Show the overlay only if it failed - this gives the user a physical button to satisfy the gesture rule
+        document.getElementById('start-overlay').style.display = 'flex';
+        document.getElementById('start-overlay').style.opacity = '1';
         
-        // If we've already tried reloading, don't loop forever
+        // As a last resort, try a hard reset if it's a persistent hardware hang
         const lastReload = sessionStorage.getItem('lastScannerReload');
         const now = Date.now();
-        if (!lastReload || (now - lastReload > 5000)) {
+        if (!lastReload || (now - lastReload > 15000)) {
+           log('🔄 Persistent hardware lock. Auto-resetting...', '#fbbf24');
            sessionStorage.setItem('lastScannerReload', now);
-           setTimeout(() => window.location.reload(), 1000);
-        } else {
-           setStatus('err', 'Permission permanently denied. Please check site settings.');
+           setTimeout(() => window.location.reload(), 1500);
         }
       } else {
         setStatus('err', 'Camera Error: ' + err.message);
@@ -507,13 +508,13 @@
 
   // Ensure cleanup on page leave or history transition
   window.addEventListener('pageshow', (e) => {
-    // If it's a history-back, we show the Start Scanner button fresh
+    // If it's a history-back, we try to auto-boot first
     if (e.persisted) {
-       log('🔄 Page resumed from history. Hardware released.', '#fbbf24');
+       log('🔄 Page resumed from history. Attempting hardware recovery...', '#fbbf24');
        success.classList.remove('on');
-       document.getElementById('start-overlay').style.display = 'flex';
-       document.getElementById('start-overlay').style.opacity = '1';
        done = false;
+       // Attempt auto-boot. If it fails due to browser policy, boot() will show the overlay.
+       setTimeout(boot, 300);
     }
   });
 
@@ -548,8 +549,9 @@
     sessionStorage.setItem('didCleanup', 'true');
   }
 
-  // DO NOT boot automatically - wait for user click
-  setStatus('', 'Waiting for user to start camera...');
+  // AUTO-BOOT on load
+  // If it works, great. If it fails with "Permission Denied", the catch block will show the "Fix" button.
+  setTimeout(boot, 500);
 </script>
 
 </body>

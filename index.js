@@ -71,6 +71,55 @@ app.use(async (req, res, next) => {
   next();
 });
 
+// Candidate Schema
+const candidateSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    party: { type: String, required: true },
+    photo: { type: String, required: true },
+    agenda: [{ type: String }]
+});
+const Candidate = mongoose.model('Candidate', candidateSchema);
+
+// Initial Candidates Seeding
+async function seedCandidates() {
+    try {
+        const count = await Candidate.countDocuments();
+        if (count === 0) {
+            const initialCandidates = [
+                {
+                    name: "Alice Smith",
+                    party: "Future Party",
+                    photo: "https://ui-avatars.com/api/?name=Alice+Smith&background=4F46E5&color=fff",
+                    agenda: ["Digital Transformation", "Eco-friendly Campus"]
+                },
+                {
+                    name: "Bob Jones",
+                    party: "Unity Group",
+                    photo: "https://ui-avatars.com/api/?name=Bob+Jones&background=06B6D4&color=fff",
+                    agenda: ["Sports Excellence", "Student Welfare"]
+                },
+                {
+                    name: "Charlie Brown",
+                    party: "Progressive Minds",
+                    photo: "https://ui-avatars.com/api/?name=Charlie+Brown&background=4F46E5&color=fff",
+                    agenda: ["AI Integration", "Research Funding"]
+                },
+                {
+                    name: "Diana Prince",
+                    party: "Empowerment Front",
+                    photo: "https://ui-avatars.com/api/?name=Diana+Prince&background=06B6D4&color=fff",
+                    agenda: ["Equal Opportunities", "Leadership Training"]
+                }
+            ];
+            await Candidate.insertMany(initialCandidates);
+            console.log("✅ Seeded initial candidates");
+        }
+    } catch (err) {
+        console.error("❌ Seeding error:", err);
+    }
+}
+seedCandidates();
+
 // Define Vote Schema and Model
 const voteSchema = new mongoose.Schema({
   option: { type: String, required: true },
@@ -84,6 +133,63 @@ const voteSchema = new mongoose.Schema({
 const Vote = mongoose.model('Vote', voteSchema);
 
 // ============ ROUTES ============
+
+// ------------------- CANDIDATE API -------------------
+
+// Get all candidates
+app.get('/api/candidates', async (req, res) => {
+    try {
+        const candidates = await Candidate.find();
+        res.json(candidates);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Add new candidate (Protected)
+app.post('/api/candidates', async (req, res) => {
+    const password = req.headers['x-admin-password'];
+    if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ error: "Unauthorized access!" });
+    }
+    try {
+        const newCandidate = new Candidate(req.body);
+        await newCandidate.save();
+        res.status(201).json(newCandidate);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Update candidate (Protected)
+app.put('/api/candidates/:id', async (req, res) => {
+    const password = req.headers['x-admin-password'];
+    if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ error: "Unauthorized access!" });
+    }
+    try {
+        const updated = await Candidate.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json(updated);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Delete candidate (Protected)
+app.delete('/api/candidates/:id', async (req, res) => {
+    const password = req.headers['x-admin-password'];
+    if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ error: "Unauthorized access!" });
+    }
+    try {
+        await Candidate.findByIdAndDelete(req.params.id);
+        res.json({ message: "Candidate deleted successfully" });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// ------------------- REDIRECTION ROUTES -------------------
 
 // Home - Send voting page
 app.get('/', (req, res) => {

@@ -1310,4 +1310,96 @@ table tbody tr:last-child td:last-child {
 
 .vc-msg-success { color: #86efac; }
 .vc-msg-error   { color: #fca5a5; }
+/* ============ CANDIDATE MANAGEMENT ============ */
+.candidate-management-section {
+  margin: 32px;
+  animation: fadeInUp 0.7s ease 0.2s both;
+}
+
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.candidate-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.cand-admin-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.cand-admin-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--accent-sky);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.cand-admin-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid var(--glass-border);
+}
+
+.cand-admin-info {
+  flex: 1;
+}
+
+.cand-admin-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.cand-admin-party {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.cand-admin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Modals */
+textarea.modal-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  color: #fff;
+  padding: 12px;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+textarea.modal-input:focus {
+  outline: none;
+  border-color: var(--accent-sky);
+  background: rgba(255, 255, 255, 0.08);
+}
 .vc-msg-pending { color: #fcd34d; }
