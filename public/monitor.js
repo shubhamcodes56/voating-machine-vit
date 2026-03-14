@@ -12,33 +12,33 @@ let allVotes = [];
 
 // ============ CHECK MONITOR ACCESS ============
 window.addEventListener('DOMContentLoaded', async () => {
-    monitorPassword = sessionStorage.getItem('monitorPassword');
+    const params = new URLSearchParams(window.location.search);
+    const autoToken = params.get('autotoken');
 
-    if (!monitorPassword) {
-        const params = new URLSearchParams(window.location.search);
-        const autoToken = params.get('autotoken');
-
-        if (autoToken) {
-            try {
-                const decoded = atob(autoToken);
-                const resp = await fetch('/api/verify-token?password=' + encodeURIComponent(decoded) + '&type=monitor');
-                const data = await resp.json();
-                if (data.valid) {
-                    sessionStorage.setItem('monitorPassword', decoded);
-                    monitorPassword = decoded;
-                    const cleanUrl = window.location.pathname;
-                    window.history.replaceState({}, document.title, cleanUrl);
-                } else {
-                    // Token invalid — show password prompt instead of redirecting
-                    showMonitorLoginOverlay();
-                    return;
-                }
-            } catch (e) {
-                console.warn('QR validation failed:', e);
+    if (autoToken) {
+        // Auto-login from QR code — decode the token and validate FIRST, overriding session
+        try {
+            const decoded = atob(autoToken);
+            const resp = await fetch('/api/verify-token?password=' + encodeURIComponent(decoded) + '&type=monitor');
+            const data = await resp.json();
+            if (data.valid) {
+                sessionStorage.setItem('monitorPassword', decoded);
+                monitorPassword = decoded;
+                const cleanUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+            } else {
+                // Token invalid — show password prompt instead of redirecting
                 showMonitorLoginOverlay();
                 return;
             }
-        } else {
+        } catch (e) {
+            console.warn('QR validation failed:', e);
+            showMonitorLoginOverlay();
+            return;
+        }
+    } else {
+        monitorPassword = sessionStorage.getItem('monitorPassword');
+        if (!monitorPassword) {
             // Direct access or no valid token — just show password prompt
             showMonitorLoginOverlay();
             return;
@@ -189,7 +189,13 @@ async function loadAllVotes() {
             // Handle unauthorized vs other errors
             if (response.status === 401) {
                 showError('Session invalid or expired. Please login again.');
-                setTimeout(() => logout(), 1500);
+                sessionStorage.removeItem('monitorPassword');
+                monitorPassword = '';
+                setTimeout(() => {
+                    showMonitorLoginOverlay();
+                    const pInput = document.getElementById('qrMonitorPasswordInput');
+                    if (pInput) pInput.focus();
+                }, 1500);
             } else {
                 showErrorInContainer('Database error: ' + (data.message || 'Unknown error'));
             }

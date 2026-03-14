@@ -13,35 +13,34 @@ let allVotes = [];
 
 // ============ CHECK ADMIN ACCESS ============
 window.addEventListener('DOMContentLoaded', async () => {
-  adminPassword = sessionStorage.getItem('adminPassword');
+  const params = new URLSearchParams(window.location.search);
+  const autoToken = params.get('autotoken');
 
-  if (!adminPassword) {
-    const params = new URLSearchParams(window.location.search);
-    const autoToken = params.get('autotoken');
-
-    if (autoToken) {
-      // Auto-login from QR code — decode the token and validate
-      try {
-        const decoded = atob(autoToken);
-        const resp = await fetch('/api/verify-token?password=' + encodeURIComponent(decoded) + '&type=admin');
-        const data = await resp.json();
-        if (data.valid) {
-          sessionStorage.setItem('adminPassword', decoded);
-          adminPassword = decoded;
-          // Remove the token from URL (clean URL) then continue loading
-          const cleanUrl = window.location.pathname;
-          window.history.replaceState({}, document.title, cleanUrl);
-        } else {
-          // Token invalid — show password prompt instead of redirecting
-          showAdminLoginOverlay();
-          return;
-        }
-      } catch (e) {
-        console.warn('QR validation failed:', e);
+  if (autoToken) {
+    // Auto-login from QR code — decode the token and validate FIRST, overriding session
+    try {
+      const decoded = atob(autoToken);
+      const resp = await fetch('/api/verify-token?password=' + encodeURIComponent(decoded) + '&type=admin');
+      const data = await resp.json();
+      if (data.valid) {
+        sessionStorage.setItem('adminPassword', decoded);
+        adminPassword = decoded;
+        // Remove the token from URL (clean URL) then continue loading
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      } else {
+        // Token invalid — show password prompt instead of redirecting
         showAdminLoginOverlay();
         return;
       }
-    } else {
+    } catch (e) {
+      console.warn('QR validation failed:', e);
+      showAdminLoginOverlay();
+      return;
+    }
+  } else {
+    adminPassword = sessionStorage.getItem('adminPassword');
+    if (!adminPassword) {
       // Direct access or no valid token — just show password prompt
       showAdminLoginOverlay();
       return;
@@ -227,7 +226,13 @@ async function loadAllVotes() {
       // Handle unauthorized vs other errors
       if (response.status === 401) {
         showError('Session invalid or expired. Please login again.');
-        setTimeout(() => logout(), 1500);
+        sessionStorage.removeItem('adminPassword');
+        adminPassword = '';
+        setTimeout(() => {
+          showAdminLoginOverlay();
+          const pInput = document.getElementById('qrAdminPasswordInput');
+          if (pInput) pInput.focus();
+        }, 1500);
       } else {
         showErrorInContainer('Database error: ' + (data.message || 'Unknown error'));
       }
