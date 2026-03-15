@@ -92,6 +92,35 @@ const voteSchema = new mongoose.Schema({
 
 const Vote = mongoose.model('Vote', voteSchema);
 
+// ============ CANDIDATE SCHEMA ============
+const candidateSchema = new mongoose.Schema({
+  name:   { type: String, required: true },
+  party:  { type: String, required: true },
+  photo:  { type: String, required: true },
+  agenda: [{ type: String }]
+});
+const Candidate = mongoose.model('Candidate', candidateSchema);
+
+// Seed initial candidates if DB is empty
+async function seedCandidates() {
+  try {
+    await connectDB();
+    const count = await Candidate.countDocuments();
+    if (count === 0) {
+      await Candidate.insertMany([
+        { name: 'Alice Smith',   party: 'Future Party',      photo: 'https://ui-avatars.com/api/?name=Alice+Smith&background=4F46E5&color=fff',   agenda: ['Digital Transformation', 'Eco-friendly Campus'] },
+        { name: 'Bob Jones',    party: 'Unity Group',       photo: 'https://ui-avatars.com/api/?name=Bob+Jones&background=06B6D4&color=fff',    agenda: ['Sports Excellence', 'Student Welfare'] },
+        { name: 'Charlie Brown',party: 'Progressive Minds', photo: 'https://ui-avatars.com/api/?name=Charlie+Brown&background=4F46E5&color=fff', agenda: ['AI Integration', 'Research Funding'] },
+        { name: 'Diana Prince', party: 'Empowerment Front', photo: 'https://ui-avatars.com/api/?name=Diana+Prince&background=06B6D4&color=fff',  agenda: ['Equal Opportunities', 'Leadership Training'] }
+      ]);
+      console.log('✅ Seeded initial candidates');
+    }
+  } catch (err) {
+    console.error('❌ Candidate seeding error:', err.message);
+  }
+}
+seedCandidates();
+
 // Define Settings Schema for global application state
 const settingsSchema = new mongoose.Schema({
   key: { type: String, required: true, unique: true },
@@ -528,6 +557,55 @@ app.put('/api/vote/:id', async (req, res) => {
     }
     console.error('Update vote error:', error);
     res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+});
+
+// ============ CANDIDATE API ============
+
+// GET all candidates (public)
+app.get('/api/candidates', async (req, res) => {
+  try {
+    const candidates = await Candidate.find();
+    res.json(candidates);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST new candidate (admin only)
+app.post('/api/candidates', async (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const c = new Candidate(req.body);
+    await c.save();
+    res.status(201).json(c);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// PUT update candidate (admin only)
+app.put('/api/candidates/:id', async (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const updated = await Candidate.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updated);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// DELETE candidate (admin only)
+app.delete('/api/candidates/:id', async (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    await Candidate.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Candidate deleted successfully' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 });
 
