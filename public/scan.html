@@ -273,12 +273,21 @@
         try { vid.pause(); } catch(e) {}
 
         // Mark that we navigated away to admin/monitor.
-        // When we return (via back button), pageshow will see this flag
-        // and force a full reload so the camera reinitialises cleanly.
         sessionStorage.setItem('returnToScanner', '1');
 
+        // CRITICAL FIX: The user generated their Admin QR code locally (e.g. http://192.168.1.5:3000/admin.html)
+        // If they scan that QR code on the live Vercel site, it redirects them to the local HTTP server.
+        // Returning from an HTTP server to the Scanner causes an instant NotAllowedError because HTTP drops camera perms.
+        // We MUST rewrite the URL to stay on the current origin (Vercel).
+        let targetUrl = text;
+        try {
+           const parsed = new URL(text);
+           targetUrl = window.location.origin + parsed.pathname + parsed.search + parsed.hash;
+           log('🔒 Rewrote URL to secure origin', '#3b82f6');
+        } catch(e) {}
+
         // Give OS 1s to release hardware before navigating
-        setTimeout(() => { window.location.replace(text); }, 1000);
+        setTimeout(() => { window.location.replace(targetUrl); }, 1000);
         return;
     }
 
@@ -534,15 +543,11 @@
 
   window.addEventListener('beforeunload', cleanup);
   window.addEventListener('unload', cleanup);
-  window.addEventListener('blur', cleanup); // Kill hardware when loss of focus
-  
-  // Also kill hardware when the user switches tabs or backgrounds the browser
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        log('📱 Tab backgrounded. Releasing hardware...', '#94a3b8');
-        cleanup();
-    }
-  });
+  // Removed aggressive 'blur' and 'visibilitychange' cleanups.
+  // Mobile browsers natively suspend camera feeds when backgrounded,
+  // there is no need to permanently kill our stream, which forces the user
+  // to refresh the page (and re-accept permissions) just because they checked a text message.
+
 
   function cleanup() {
     if (stream) {
