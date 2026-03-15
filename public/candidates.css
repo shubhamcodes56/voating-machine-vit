@@ -263,6 +263,16 @@
   .cand-card  { padding: 28px 20px 24px; }
 }
 
+/* Voting-section override: no extra bottom margin */
+#votingSection .cand-grid {
+  margin-bottom: 0;
+}
+
+/* Voting-section override: card pointer cursor */
+#votingSection .cand-card {
+  cursor: pointer;
+}
+
 /* selection styles for voting */
 .cand-card-label {
   display: block;

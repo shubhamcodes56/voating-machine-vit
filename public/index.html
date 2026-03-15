@@ -94,22 +94,22 @@
         </section>
 
         <!-- Voting Form Section (shown after verification) -->
-        <section id="votingSection" class="voting-section" style="display: none; max-width: 1000px;">
+        <section id="votingSection" class="voting-section" style="display: none; max-width: 1100px;">
           <div class="form-container" style="max-width: 100%; width: 100%;">
             <h2>Vote Now</h2>
 
-            <div class="form-column">
-              <!-- Candidate Selection -->
-              <div class="input-group">
-                <label>Select Candidate</label>
-                <div class="cand-grid" id="candidateListContainer">
-                  <div class="loading-candidates" style="grid-column: 1/-1; color: var(--text-secondary); padding: 40px; text-align: center;">
-                    Loading candidates...
-                  </div>
+            <!-- Candidate Selection - Full Width -->
+            <div class="input-group" style="margin-bottom: 28px;">
+              <label style="display:block; margin-bottom:12px; font-weight:600;">Select Candidate</label>
+              <div class="cand-grid" id="candidateListContainer">
+                <div class="loading-candidates" style="grid-column: 1/-1; color: var(--text-secondary); padding: 40px; text-align: center;">
+                  Loading candidates...
                 </div>
               </div>
+            </div>
 
-              <!-- Roll No (instead of Your Name) -->
+            <div class="form-column">
+              <!-- Roll No -->
               <div class="input-group">
                 <label for="rollNo">Your Roll No</label>
                 <input type="text" id="rollNo" placeholder="Enter your roll no" class="text-input">
