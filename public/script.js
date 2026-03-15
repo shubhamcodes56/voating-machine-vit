@@ -322,14 +322,17 @@ async function verifyVoterId() {
       showVoterIdSuccess('Voter ID verified! Proceeding to voting...');
 
       setTimeout(() => {
-        // Slide out the current section, then show voting section
+        // Slide out current section
         voterIdSection.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
         voterIdSection.style.opacity = '0';
+        voterIdSection.style.transform = 'translate3d(0, -10px, 0)';
 
         setTimeout(() => {
           voterIdSection.style.display = 'none';
           votingSection.style.display = 'block';
+          // section-enter in CSS handles the entry animation vertically
           votingSection.classList.add('section-enter');
+          votingSection.style.transform = 'translate3d(0, 0, 0)';
           // Focus on rollNo since candidateName is a group of radios
           const rollNoInput = document.getElementById('rollNo');
           if (rollNoInput) rollNoInput.focus();

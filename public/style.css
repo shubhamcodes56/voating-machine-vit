@@ -387,19 +387,39 @@ body::after {
 }
 
 /* ============ MAIN CONTENT ============ */
+/* Force vertical scrollbar to prevent horizontal layout shift when content height changes */
+html {
+  overflow-y: scroll;
+}
+
 .main {
   flex: 1;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  padding: 40px 20px;
+  justify-content: flex-start;
+  padding: 80px 20px;
   width: 100%;
+  min-height: calc(100vh - 160px);
+  box-sizing: border-box;
 }
 
-/* ============ VOTING SECTION ============ */
+/* ============ STABILIZED CONTAINERS ============ */
+.voter-id-section,
 .voting-section {
   width: 100%;
+  margin: 0 auto;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+}
+
+.voter-id-section {
   max-width: 480px;
+}
+
+.voting-section {
+  max-width: 1100px;
 }
 
 .form-container {
@@ -413,7 +433,11 @@ body::after {
   animation: cardEntrance 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
   position: relative;
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
 }
 
 @media (max-width: 640px) {
@@ -958,10 +982,9 @@ body::after {
 }
 
 /* ============ SECTION TRANSITION ============ */
-/* ============ SECTION TRANSITION ============ */
-.voting-section {
-  width: 100%;
-  max-width: 480px;
+.section-enter {
+  animation: sectionEnter 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
 }
 
 .section-enter {

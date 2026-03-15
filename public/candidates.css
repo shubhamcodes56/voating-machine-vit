@@ -70,6 +70,8 @@
   text-align: center;
   position: relative;
   overflow: hidden;
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0); /* Stabilize against sub-pixel jitter */
 }
 
 .cand-card::before {
@@ -82,7 +84,7 @@
 }
 
 .cand-card:hover {
-  transform: translateY(-6px);
+  transform: translate3d(0, -6px, 0);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
   border-color: rgba(251, 191, 36, 0.3);
 }
