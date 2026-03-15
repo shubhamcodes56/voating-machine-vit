@@ -72,6 +72,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // Poll frequently for live updates (High responsiveness)
   setInterval(checkVotingStatus, 1500);
   setInterval(checkVotingMode, 2000);
+
+  // --- NAVBAR SHRINK ON SCROLL ---
+  const navbar = document.querySelector('.navbar');
+  if (navbar) {
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 20) {
+        navbar.classList.add('shrunk');
+      } else {
+        navbar.classList.remove('shrunk');
+      }
+    }, { passive: true });
+  }
 });
 
 // ============ PRE-VOTING MODE CHECK ============

@@ -265,8 +265,42 @@
   .cand-card  { padding: 28px 20px 24px; }
 }
 
-/* Voting-section override: no extra bottom margin */
+/* Voting-section override: horizontal scrolling */
 #votingSection .cand-grid {
+  display: flex !important;
+  flex-direction: row !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  gap: 24px;
+  padding: 20px 10px 40px;
+  margin-bottom: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(251, 191, 36, 0.3) transparent;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+#votingSection .cand-grid::-webkit-scrollbar {
+  height: 6px;
+}
+
+#votingSection .cand-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#votingSection .cand-grid::-webkit-scrollbar-thumb {
+  background: rgba(251, 191, 36, 0.2);
+  border-radius: 10px;
+}
+
+#votingSection .cand-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(251, 191, 36, 0.4);
+}
+
+#votingSection .cand-card {
+  min-width: 300px;
+  flex: 0 0 auto;
+  scroll-snap-align: center;
   margin-bottom: 0;
 }
 
@@ -299,6 +333,7 @@
 .cand-card-label:has(input:checked) .cand-photo {
   border-color: #fbbf24;
   box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+  transform: scale(1.05); /* Added scale to photo when selected */
 }
 
 .selection-indicator {
