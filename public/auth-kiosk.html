@@ -65,14 +65,17 @@
                     spin.style.display = 'none';
                     title.textContent = 'Device Authorized! ✅';
                     title.className = 'success';
-                    msg.innerHTML = 'This device is now an official voting kiosk.<br><br>Redirecting to scanner...';
+                    msg.innerHTML = 'This device is now an official voting kiosk.<br><br>Redirecting...';
                     
-                    // Set the authorization flag
+                    // Set the authorization flag and sync the session token
                     localStorage.setItem('kioskAuthorized', 'true');
+                    if (data.votingSessionToken) {
+                        localStorage.setItem('authorizedSessionToken', data.votingSessionToken);
+                    }
                     
                     setTimeout(() => {
                         window.location.replace('/scan');
-                    }, 2000);
+                    }, 200);
                 } else {
                     spin.style.display = 'none';
                     title.textContent = 'Authorization Failed ❌';

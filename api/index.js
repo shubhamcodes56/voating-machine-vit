@@ -424,11 +424,14 @@ app.get('/api/admin-status', (req, res) => {
 });
 
 // API: Verify a password token (used by QR auto-login)
-app.get('/api/verify-token', (req, res) => {
+app.get('/api/verify-token', async (req, res) => {
   const { password, type } = req.query;
   if (!password) return res.status(400).json({ valid: false, message: 'No password provided' });
-  if (type === 'admin')   return res.json({ valid: password === ADMIN_PASSWORD });
-  if (type === 'monitor') return res.json({ valid: password === MONITOR_PASSWORD });
+  
+  const votingSessionToken = await getSetting('votingSessionToken', 'initial');
+  
+  if (type === 'admin')   return res.json({ valid: password === ADMIN_PASSWORD, votingSessionToken });
+  if (type === 'monitor') return res.json({ valid: password === MONITOR_PASSWORD, votingSessionToken });
   return res.status(400).json({ valid: false, message: 'Invalid type' });
 });
 

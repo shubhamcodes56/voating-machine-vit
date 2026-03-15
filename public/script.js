@@ -69,9 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadCandidates();
 
-  // Poll every 5 seconds for live updates
-  setInterval(checkVotingMode, 5000);
-  setInterval(checkVotingStatus, 3000);
+  // Poll frequently for live updates (High responsiveness)
+  setInterval(checkVotingStatus, 1500);
+  setInterval(checkVotingMode, 2000);
 });
 
 // ============ PRE-VOTING MODE CHECK ============

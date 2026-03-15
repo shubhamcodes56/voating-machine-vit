@@ -292,8 +292,8 @@
            log('🔒 Rewrote URL to secure origin', '#3b82f6');
         } catch(e) {}
 
-        // Give OS 1s to release hardware before navigating
-        setTimeout(() => { window.location.replace(targetUrl); }, 1000);
+        // Give OS 100ms to release hardware before navigating
+        setTimeout(() => { window.location.replace(targetUrl); }, 100);
         return;
     }
 
@@ -305,13 +305,13 @@
         setStatus('error', '🔒 Voting restricted to official Kiosks');
         sidEl.textContent = 'Unauthorized Device';
         sidEl.style.color = '#f87171'; // Red color for error
-        // Resume scanning after 3s
+        // Resume scanning after 1.5s
         setTimeout(() => { 
             sidEl.textContent = 'Scan Voter QR';
             sidEl.style.color = '#fff';
             setStatus('ready', 'Monitoring video feed...');
             isScanning = true; 
-        }, 3000);
+        }, 1500);
         return;
     }
 
@@ -325,7 +325,7 @@
     }
     vid.srcObject = null;
 
-    setTimeout(() => { window.location.replace('/?vid=' + encodeURIComponent(vid_str)); }, 1000);
+    setTimeout(() => { window.location.replace('/?vid=' + encodeURIComponent(vid_str)); }, 200);
   }
 
   function manualSubmit() {
