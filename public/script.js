@@ -325,7 +325,6 @@ async function verifyVoterId() {
         // Slide out the current section, then show voting section
         voterIdSection.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
         voterIdSection.style.opacity = '0';
-        voterIdSection.style.transform = 'translateX(-40px)';
 
         setTimeout(() => {
           voterIdSection.style.display = 'none';
