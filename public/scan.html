@@ -259,19 +259,25 @@
     
     // Check if the QR code is a URL (like the Admin or Monitor auto-login URLs)
     if (text.toLowerCase().startsWith('http://') || text.toLowerCase().startsWith('https://')) {
-        log('✅ URL detected', '#4ade80');
+        log('✅ URL detected — navigating to panel', '#4ade80');
         setStatus('ready', 'Code Verified! Closing Camera...');
         sidEl.textContent = 'Redirecting to Panel...';
         success.classList.add('on');
-        
-        // AGGRESSIVE TRACK KILL
+
+        // Stop ALL tracks before leaving so hardware is fully released
         if (stream) {
-            stream.getTracks().forEach(t => { t.stop(); t.enabled = false; });
+            stream.getTracks().forEach(t => { try { t.stop(); t.enabled = false; } catch(e){} });
             stream = null;
         }
         vid.srcObject = null;
+        try { vid.pause(); } catch(e) {}
 
-        // Give the OS 1 FULL SECOND to release hardware before we trigger the navigate
+        // Mark that we navigated away to admin/monitor.
+        // When we return (via back button), pageshow will see this flag
+        // and force a full reload so the camera reinitialises cleanly.
+        sessionStorage.setItem('returnToScanner', '1');
+
+        // Give OS 1s to release hardware before navigating
         setTimeout(() => { window.location.replace(text); }, 1000);
         return;
     }
@@ -506,15 +512,23 @@
     }, 300);
   }
 
-  // Ensure cleanup on page leave or history transition
+  // ── PAGE SHOW: handle back-button / bfcache restore ──
   window.addEventListener('pageshow', (e) => {
-    // If it's a history-back, we try to auto-boot first
     if (e.persisted) {
-       log('🔄 Page resumed from history. Attempting hardware recovery...', '#fbbf24');
-       success.classList.remove('on');
-       done = false;
-       // Attempt auto-boot. If it fails due to browser policy, boot() will show the overlay.
-       setTimeout(boot, 300);
+      // The page was restored from bfcache (history back).
+      // The camera hardware might still be locked from the previous session.
+      // The SAFEST fix is to force a full reload — this is fast and reliable.
+      log('🔄 bfcache restore detected — hard reloading for clean camera start', '#fbbf24');
+      // Clear the flag since we are about to reload
+      sessionStorage.removeItem('returnToScanner');
+      window.location.reload();
+      return;
+    }
+    // Normal page load (not bfcache) — check if we marked a return from admin/monitor
+    if (sessionStorage.getItem('returnToScanner') === '1') {
+      sessionStorage.removeItem('returnToScanner');
+      // Page already loaded fresh — just boot naturally (setTimeout(boot,500) below handles this)
+      log('↩️ Returned from admin panel — camera starting fresh', '#86efac');
     }
   });
 
