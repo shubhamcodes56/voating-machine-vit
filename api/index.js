@@ -75,9 +75,9 @@ app.use(async (req, res, next) => {
 // Vercel automatically serves the public folder, but for local dev:
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Home - Send voting page
+// Home - Redirect to Kiosk Scanner
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public', 'index.html'));
+  res.redirect('/scan');
 });
 
 // Define Vote Schema and Model

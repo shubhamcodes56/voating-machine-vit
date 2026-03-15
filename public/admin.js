@@ -425,7 +425,7 @@ async function deleteVote(voteId) {
 // ============ LOGOUT ============
 function logout() {
   sessionStorage.removeItem('adminPassword');
-  window.location.href = '/';
+  window.location.href = '/scan';
 }
 
 // ============ HELPER FUNCTIONS ============

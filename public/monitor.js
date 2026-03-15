@@ -249,7 +249,7 @@ function filterVotes() {
 // ============ LOGOUT ============
 function logout() {
     sessionStorage.removeItem('monitorPassword');
-    window.location.href = '/';
+    window.location.href = '/scan';
 }
 
 // ============ HELPER FUNCTIONS ============

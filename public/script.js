@@ -261,6 +261,13 @@ async function verifyVoterId() {
       }, 1200);
     } else {
       showVoterIdError(data.message || 'Invalid Voter ID');
+      
+      // Auto-redirect to scanner after 3 seconds on duplicate/invalid scan
+      if (response.status === 409 || response.status === 401) {
+        setTimeout(() => {
+          window.location.href = '/scan';
+        }, 3000);
+      }
     }
   } catch (error) {
     clearLoading(verifyBtn);
