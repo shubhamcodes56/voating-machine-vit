@@ -163,6 +163,12 @@
      <div style="text-align:center; padding:0 30px;">
         <h2 style="color:#fff; margin-bottom:8px; font-size:1.4rem;">Camera Restricted</h2>
         <p style="color:#94a3b8; font-size:0.9rem;">The browser blocked the camera auto-start. Tap below to fix this and start scanning.</p>
+        <p style="color:#d1d5db; margin-bottom:20px; font-size:1.1rem;">Voter already voted?</p>
+        <button onclick="window.location.reload()" style="background:#5eead4; color:#0f172a; border:none; padding:12px 24px; border-radius:10px; font-weight:700; cursor:pointer;">Retry New Voter</button>
+        <div style="margin-top: 30px; font-size: 0.8rem; opacity: 0.6;">
+          <a href="/" style="color: #fff; text-decoration: none; margin-right: 15px;">⬅ Back to Home</a>
+          <a href="#" onclick="kioskLogout(); return false;" id="kioskLogoutBtn" style="color: #fca5a5; text-decoration: none; display: none;">Log Out Kiosk</a>
+        </div>
      </div>
      <button id="start-btn" onclick="startScanning()" style="padding:16px 32px; background:linear-gradient(135deg,#3b82f6,#1d4ed8); border:none; border-radius:14px; color:#fff; font-weight:800; font-size:1.1rem; cursor:pointer; box-shadow:0 10px 30px rgba(59,130,246,0.4);">
        Fix & Start Scanner
@@ -594,8 +600,20 @@
     sessionStorage.setItem('didCleanup', 'true');
   }
 
+  // ── KIOSK LOGOUT ──
+  function kioskLogout() {
+    if (confirm('Are you sure you want to logout this Kiosk? Voting will be disabled on this device.')) {
+      localStorage.removeItem('kioskAuthorized');
+      window.location.href = '/?loggedout=true';
+    }
+  }
+
+  // Show logout button if authorized
+  if (localStorage.getItem('kioskAuthorized') === 'true') {
+     document.getElementById('kioskLogoutBtn').style.display = 'inline';
+  }
+
   // AUTO-BOOT on load
-  // If it works, great. If it fails with "Permission Denied", the catch block will show the "Fix" button.
   setTimeout(boot, 500);
 </script>
 

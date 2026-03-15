@@ -48,6 +48,35 @@
         </div>
       </div>
 
+      <!-- Unauthorized Banner (shown when accessed on personal device) -->
+      <div id="unauthorizedBanner" class="prevoting-banner" style="display:none; background: rgba(244, 63, 94, 0.05); border-color: rgba(244, 63, 94, 0.2);">
+        <div class="pvb-inner">
+          <div class="pvb-icon" style="color: #F43F5E;">🔒</div>
+          <div class="pvb-text">
+            <h2 style="color: #F43F5E;">Voting is Restricted</h2>
+            <p>Voting can only be done at the official scanning Kiosk. Please use the designated tablet to cast your vote.</p>
+          </div>
+          <div class="pvb-actions">
+            <a href="/qr.html" class="pvb-btn pvb-btn-primary" style="background: linear-gradient(135deg, #f43f5e, #dc2626);">📲 My QR Code</a>
+            <a href="/candidates.html" class="pvb-btn pvb-btn-secondary">👥 Our Leaders</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Voting Paused Banner (shown when admin clicks stop) -->
+      <div id="pausedBanner" class="prevoting-banner" style="display:none; background: rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.2);">
+        <div class="pvb-inner">
+          <div class="pvb-icon" style="color: #F59E0B;">🛑</div>
+          <div class="pvb-text">
+            <h2 style="color: #F59E0B;">Voting is Paused</h2>
+            <p>The election process has been temporarily halted by the administrator for verification. Please wait.</p>
+          </div>
+          <div class="pvb-actions">
+            <a href="/qr.html" class="pvb-btn pvb-btn-primary" style="background: linear-gradient(135deg, #f59e0b, #d97706);">📲 My QR Code</a>
+          </div>
+        </div>
+      </div>
+
       <!-- Header -->
       <header class="header" id="votingHeader">
         <div class="header-content">
@@ -165,7 +194,7 @@
               <li><a href="#">Privacy Policy</a></li>
               <li><a href="#">Terms of Service</a></li>
               <li><a href="#">Support Center</a></li>
-              <li><a href="#">Cookie Policy</a></li>
+              <li><a href="#" onclick="kioskLogout(); return false;" id="kioskLogoutBtn" style="color: #f87171; display: none;">Log Out Kiosk</a></li>
             </ul>
           </div>
         </div>

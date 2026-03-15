@@ -22,10 +22,21 @@ let verifiedVoterId = '';
 document.addEventListener('DOMContentLoaded', () => {
 
   // ── KIOSK AUTHORIZATION CHECK ──
-  // If this device is not authorized, block access to the voting machine completely.
-  if (localStorage.getItem('kioskAuthorized') !== 'true') {
-    showUnauthorizedOverlay();
-    return; // Stop further execution
+  const isKiosk = localStorage.getItem('kioskAuthorized') === 'true';
+  const unauthorizedBanner = document.getElementById('unauthorizedBanner');
+  const logoutBtn = document.getElementById('kioskLogoutBtn');
+
+  if (!isKiosk) {
+    // Personal Device — show banner, hide voting sections
+    if (unauthorizedBanner) unauthorizedBanner.style.display = 'block';
+    const votingHeader = document.getElementById('votingHeader');
+    const votingMain = document.getElementById('votingMain');
+    if (votingHeader) votingHeader.style.display = 'none';
+    if (votingMain) votingMain.style.display = 'none';
+    if (logoutBtn) logoutBtn.style.display = 'none';
+  } else {
+    // Authorized Kiosk — show logout button
+    if (logoutBtn) logoutBtn.style.display = 'block';
   }
 
   const params = new URLSearchParams(window.location.search);
@@ -106,16 +117,21 @@ async function checkVotingStatus() {
     const response = await fetch('/api/voting-status');
     const data = await response.json();
     const newStatus = data.isVotingActive;
+    const pausedBanner = document.getElementById('pausedBanner');
+    const votingMain = document.getElementById('votingMain');
 
     // Only show paused message if we are NOT in pre-voting mode
     if (currentVotingStarted) {
-      // If status changed to inactive
-      if (isVotingActive && !newStatus) {
-        showVotingPausedMessage();
-      } 
-      // If status changed back to active
-      else if (!isVotingActive && newStatus) {
-        removeVotingPausedMessage();
+      if (!newStatus) {
+        // Voting Paused — show banner, hide main content
+        if (pausedBanner) pausedBanner.style.display = 'block';
+        if (votingMain) votingMain.style.display = 'none';
+      } else {
+        // Voting Active — ensure paused banner is hidden and main content shown (if authorized)
+        if (pausedBanner) pausedBanner.style.display = 'none';
+        if (localStorage.getItem('kioskAuthorized') === 'true') {
+          if (votingMain) votingMain.style.display = '';
+        }
       }
     }
 
@@ -126,80 +142,24 @@ async function checkVotingStatus() {
 }
 
 function showVotingPausedMessage() {
-  if (document.getElementById('votingPausedOverlay')) return;
-
-  const overlay = document.createElement('div');
-  overlay.id = 'votingPausedOverlay';
-  overlay.style.cssText = `
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(4, 9, 26, 0.95);
-    backdrop-filter: blur(15px);
-    z-index: 9999;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    color: white; font-family: 'Outfit', sans-serif; text-align: center; padding: 20px;
-    animation: fadeIn 0.5s ease;
-  `;
-  overlay.innerHTML = `
-    <div style="background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.2); padding: 40px; border-radius: 30px; max-width: 600px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
-      <div style="font-size: 5rem; margin-bottom: 1.5rem;">🛑</div>
-      <h1 style="font-size: 3rem; margin-bottom: 1rem; color: #F43F5E; font-weight: 800; letter-spacing: -1px;">Voting Paused</h1>
-      <p style="font-size: 1.25rem; color: #94A3B8; margin-bottom: 2rem; line-height: 1.6;">
-        The election process has been temporarily halted by the administrator for verification.
-      </p>
-      <div style="padding: 15px 25px; border-radius: 12px; background: rgba(255,255,255,0.03); display: inline-flex; align-items: center; gap: 10px; margin-bottom: 30px;">
-        <span class="pulse-dot"></span>
-        <span style="font-size: 0.9rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Waiting for resumption...</span>
-      </div>
-      <div>
-        <button onclick="showMonitorPanel()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #94A3B8; padding: 10px 20px; border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;">
-          🔒 Monitoring Access
-        </button>
-      </div>
-    </div>
-    <style>
-      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-      .pulse-dot { width: 8px; height: 8px; background: #3B82F6; border-radius: 50%; animation: pulse 1.5s infinite; }
-      @keyframes pulse { 0% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { transform: scale(1.1); opacity: 0.3; box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
-    </style>
-  `;
-  document.body.appendChild(overlay);
+  // Deprecated - using inline banner
 }
 
 function removeVotingPausedMessage() {
-  const overlay = document.getElementById('votingPausedOverlay');
-  if (overlay) {
-    overlay.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-    overlay.style.opacity = '0';
-    overlay.style.transform = 'scale(1.1)';
-    setTimeout(() => overlay.remove(), 500);
+  // Deprecated - using inline banner
+}
+
+// ============ KIOSK LOGOUT ============
+function kioskLogout() {
+  if (confirm('Are you sure you want to logout this Kiosk? Voting will be disabled on this device.')) {
+    localStorage.removeItem('kioskAuthorized');
+    window.location.href = '/?loggedout=true';
   }
 }
 
-// ============ UNAUTHORIZED OVERLAY ============
+// ============ UNAUTHORIZED OVERLAY (Deprecated) ============
 function showUnauthorizedOverlay() {
-  if (document.getElementById('unauthorizedOverlay')) return;
-
-  const overlay = document.createElement('div');
-  overlay.id = 'unauthorizedOverlay';
-  overlay.style.cssText = `
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(4, 9, 26, 0.98);
-    backdrop-filter: blur(15px);
-    z-index: 10000;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    color: white; font-family: 'Outfit', sans-serif; text-align: center; padding: 20px;
-  `;
-  overlay.innerHTML = `
-    <div style="background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.2); padding: 50px; border-radius: 30px; max-width: 600px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
-      <div style="font-size: 5rem; margin-bottom: 1.5rem;">🔒</div>
-      <h1 style="font-size: 2.5rem; margin-bottom: 1rem; color: #F43F5E; font-weight: 800; letter-spacing: -1px;">Unauthorized Device</h1>
-      <p style="font-size: 1.2rem; color: #94A3B8; margin-bottom: 2rem; line-height: 1.6;">
-        Voting is restricted to official authorized Kiosk devices only.<br>Please use the designated scanning station.
-      </p>
-      <button onclick="window.location.href='/scan'" style="background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: white; padding: 15px 30px; border-radius: 12px; font-weight: 600; font-size: 1.1rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 10px 20px rgba(59,130,246,0.3)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';">Go to Scanner</button>
-    </div>
-  `;
-  document.body.appendChild(overlay);
+  // Using inline banner now
 }
 
 // ============ RIPPLE EFFECT HELPER ============
