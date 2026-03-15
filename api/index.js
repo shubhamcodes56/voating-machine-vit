@@ -195,7 +195,8 @@ app.get('/api/voting-status', async (req, res) => {
   try {
     const isVotingActive = await getSetting('isVotingActive', true);
     const isHardStop = await getSetting('isHardStop', false);
-    res.json({ isVotingActive, isHardStop });
+    const votingSessionToken = await getSetting('votingSessionToken', 'initial');
+    res.json({ isVotingActive, isHardStop, votingSessionToken });
   } catch (error) {
     res.status(500).json({ message: 'Server error: ' + error.message });
   }
@@ -216,9 +217,10 @@ app.post('/api/toggle-voting', async (req, res) => {
 
     await updateSetting('isVotingActive', active);
     
-    // If hardStop is provided, update it. If starting voting, always clear hardStop.
+    // If starting voting, regenerate the session token to force all kiosks to re-scan
     if (active) {
       await updateSetting('isHardStop', false);
+      await updateSetting('votingSessionToken', Date.now().toString());
     } else if (typeof hardStop === 'boolean') {
       await updateSetting('isHardStop', hardStop);
     }
@@ -264,6 +266,8 @@ app.post('/api/set-voting-mode', async (req, res) => {
     } else {
       // When starting the voting session, ensure active voting is unpaused
       await updateSetting('isVotingActive', true);
+      // Regenerate session token to force re-scan on all devices
+      await updateSetting('votingSessionToken', Date.now().toString());
     }
     res.json({ success: true, votingStarted: started });
   } catch (error) {

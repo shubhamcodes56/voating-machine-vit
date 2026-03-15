@@ -105,6 +105,16 @@ body::after {
   flex-direction: column;
   position: relative;
   z-index: 1;
+  width: 100%;
+}
+
+.content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1400px; /* Optional cap for very wide screens */
+  margin: 0 auto;
 }
 
 /* ============ HEADER & NAVIGATION ============ */
@@ -383,6 +393,7 @@ body::after {
   justify-content: center;
   align-items: center;
   padding: 40px 20px;
+  width: 100%;
 }
 
 /* ============ VOTING SECTION ============ */
@@ -447,12 +458,12 @@ body::after {
 @keyframes cardEntrance {
   from {
     opacity: 0;
-    transform: translateY(40px) scale(0.95);
+    transform: translateY(30px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
@@ -960,12 +971,12 @@ body::after {
 @keyframes sectionEnter {
   from {
     opacity: 0;
-    transform: translateX(40px) scale(0.97);
+    transform: translateY(20px);
   }
 
   to {
     opacity: 1;
-    transform: translateX(0) scale(1);
+    transform: translateY(0);
   }
 }
 

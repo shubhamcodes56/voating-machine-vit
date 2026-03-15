@@ -44,9 +44,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (vid) {
     console.log('[QR Redirect] Voter ID received from scanner:', vid);
     const input = document.getElementById('voterIdInput');
-    input.value = vid; // already decoded by URLSearchParams
+    input.value = vid; 
     input.style.boxShadow = '0 0 0 3px rgba(34, 197, 94, 0.45)';
     setTimeout(() => { input.style.boxShadow = ''; }, 1200);
+    
     // Auto-trigger verification
     setTimeout(() => {
       console.log('[QR Redirect] Auto-triggering verifyVoterId() with:', vid);
@@ -119,7 +120,22 @@ async function checkVotingStatus() {
     const data = await response.json();
     const newStatus = data.isVotingActive;
     const isHardStop = data.isHardStop;
+    const votingSessionToken = data.votingSessionToken;
     
+    // --- SESSION VALIDATION ---
+    // If we are authorized, check if the session is still valid
+    if (localStorage.getItem('kioskAuthorized') === 'true') {
+      const savedToken = localStorage.getItem('authorizedSessionToken');
+      // If server token exists and is different from what we saved, force re-scan
+      if (votingSessionToken && votingSessionToken !== savedToken) {
+        console.warn('[Session] Voting session token changed. Forcing re-authorization...');
+        localStorage.removeItem('kioskAuthorized');
+        localStorage.removeItem('authorizedSessionToken');
+        window.location.reload(); // Refresh to show "Unauthorized" state
+        return;
+      }
+    }
+
     const pausedBanner = document.getElementById('pausedBanner');
     const votingMain = document.getElementById('votingMain');
 
@@ -292,6 +308,17 @@ async function verifyVoterId() {
 
     if (response.ok) {
       verifiedVoterId = voterId;
+      
+      // Save current session token to mark this authorization as valid for THIS session
+      try {
+        const statusResp = await fetch('/api/voting-status');
+        const statusData = await statusResp.json();
+        if (statusData.votingSessionToken) {
+          localStorage.setItem('authorizedSessionToken', statusData.votingSessionToken);
+          localStorage.setItem('kioskAuthorized', 'true');
+        }
+      } catch (e) { console.error('Error saving session token:', e); }
+
       showVoterIdSuccess('Voter ID verified! Proceeding to voting...');
 
       setTimeout(() => {
