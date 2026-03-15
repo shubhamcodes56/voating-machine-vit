@@ -220,7 +220,7 @@ app.post('/api/toggle-voting', async (req, res) => {
     // If starting voting, regenerate the session token to force all kiosks to re-scan
     if (active) {
       await updateSetting('isHardStop', false);
-      await updateSetting('votingSessionToken', Date.now().toString());
+      // No longer resetting session token here: Monitor halts don't de-authorize kiosks.
     } else if (typeof hardStop === 'boolean') {
       await updateSetting('isHardStop', hardStop);
     }
