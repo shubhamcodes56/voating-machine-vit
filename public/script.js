@@ -91,18 +91,19 @@ async function checkVotingMode() {
     if (votingStarted) {
       // Voting is open — show full site
       if (banner)       banner.style.display = 'none';
-      if (votingHeader) votingHeader.style.display = '';
-      if (votingMain)   votingMain.style.display = '';
-      if (kioskNavLink) kioskNavLink.style.display = '';
+      if (votingHeader) votingHeader.style.display = 'block';
+      if (votingMain)   votingMain.style.display = 'block';
+      if (kioskNavLink) kioskNavLink.style.display = 'block';
     } else {
-      // Pre-voting mode — hide voting interface, show banner
+      // Pre-voting mode — hide voting interface, show banner, KEEP navbar
       if (banner)       banner.style.display = 'block';
-      if (votingHeader) votingHeader.style.display = 'none';
+      if (votingHeader) votingHeader.style.display = 'block';
       if (votingMain)   votingMain.style.display = 'none';
       if (kioskNavLink) kioskNavLink.style.display = 'none';
       
-      // Ensure the "paused" overlay doesn't show in pre-voting mode
-      removeVotingPausedMessage();
+      // Ensure the "paused" banner doesn't show in pre-voting mode
+      const pausedBanner = document.getElementById('pausedBanner');
+      if (pausedBanner) pausedBanner.style.display = 'none';
     }
   } catch (e) {
     // silently fail — default shows full site
@@ -117,17 +118,28 @@ async function checkVotingStatus() {
     const response = await fetch('/api/voting-status');
     const data = await response.json();
     const newStatus = data.isVotingActive;
+    const isHardStop = data.isHardStop;
+    
     const pausedBanner = document.getElementById('pausedBanner');
     const votingMain = document.getElementById('votingMain');
 
     // Only show paused message if we are NOT in pre-voting mode
     if (currentVotingStarted) {
       if (!newStatus) {
-        // Voting Paused — show banner, hide main content
-        if (pausedBanner) pausedBanner.style.display = 'block';
-        if (votingMain) votingMain.style.display = 'none';
+        if (isHardStop) {
+          // EMERGENCY STOP (Monitoring) — hide everything including navbar
+          showEmergencyOverlay();
+          if (pausedBanner) pausedBanner.style.display = 'none';
+          if (votingMain) votingMain.style.display = 'none';
+        } else {
+          // SOFT PAUSE (Admin) — show banner, keep navbar
+          removeEmergencyOverlay();
+          if (pausedBanner) pausedBanner.style.display = 'block';
+          if (votingMain) votingMain.style.display = 'none';
+        }
       } else {
-        // Voting Active — ensure paused banner is hidden and main content shown (if authorized)
+        // Voting Active — ensure banners/overlays are hidden
+        removeEmergencyOverlay();
         if (pausedBanner) pausedBanner.style.display = 'none';
         if (localStorage.getItem('kioskAuthorized') === 'true') {
           if (votingMain) votingMain.style.display = '';
@@ -141,12 +153,54 @@ async function checkVotingStatus() {
   }
 }
 
-function showVotingPausedMessage() {
-  // Deprecated - using inline banner
+// ============ EMERGENCY OVERLAY (Hard Stop) ============
+function showEmergencyOverlay() {
+  if (document.getElementById('emergencyOverlay')) return;
+  
+  // Hide navbar for hard stop
+  const votingHeader = document.getElementById('votingHeader');
+  if (votingHeader) votingHeader.style.display = 'none';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'emergencyOverlay';
+  overlay.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(4, 9, 26, 0.98);
+    backdrop-filter: blur(20px);
+    z-index: 20000;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: white; font-family: 'Outfit', sans-serif; text-align: center; padding: 20px;
+    animation: fadeIn 0.4s ease;
+  `;
+  overlay.innerHTML = `
+    <div style="background: rgba(244, 63, 94, 0.05); border: 1px solid rgba(244, 63, 94, 0.2); padding: 50px; border-radius: 40px; max-width: 600px; box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
+      <div style="font-size: 6rem; margin-bottom: 2rem; filter: drop-shadow(0 0 20px rgba(244,63,94,0.4));">🛑</div>
+      <h1 style="font-size: 3rem; margin-bottom: 1.5rem; color: #F43F5E; font-weight: 900; letter-spacing: -1.5px; text-transform: uppercase;">Voting Halted</h1>
+      <p style="font-size: 1.35rem; color: #94A3B8; margin-bottom: 2.5rem; line-height: 1.7; font-weight: 500;">
+        The election has been <strong>hard-stopped</strong> by the monitoring team.<br>All operations are frozen.
+      </p>
+      <div style="padding: 15px 30px; border-radius: 100px; background: rgba(255,255,255,0.03); display: inline-flex; align-items: center; gap: 12px;">
+        <span class="pulse-dot-red"></span>
+        <span style="font-size: 1rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">Security Protocol Active</span>
+      </div>
+    </div>
+    <style>
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      .pulse-dot-red { width: 10px; height: 10px; background: #F43F5E; border-radius: 50%; animation: pulse-red 1.2s infinite; }
+      @keyframes pulse-red { 0% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(244, 63, 148, 0.7); } 70% { transform: scale(1.3); opacity: 0.2; box-shadow: 0 0 0 15px rgba(244, 63, 148, 0); } 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(244, 63, 148, 0); } }
+    </style>
+  `;
+  document.body.appendChild(overlay);
 }
 
-function removeVotingPausedMessage() {
-  // Deprecated - using inline banner
+function removeEmergencyOverlay() {
+  const overlay = document.getElementById('emergencyOverlay');
+  if (overlay) {
+    overlay.remove();
+    // Restore navbar
+    const votingHeader = document.getElementById('votingHeader');
+    if (votingHeader) votingHeader.style.display = 'block';
+  }
 }
 
 // ============ KIOSK LOGOUT ============

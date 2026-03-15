@@ -194,7 +194,8 @@ function normalizeVoterId(id) {
 app.get('/api/voting-status', async (req, res) => {
   try {
     const isVotingActive = await getSetting('isVotingActive', true);
-    res.json({ isVotingActive });
+    const isHardStop = await getSetting('isHardStop', false);
+    res.json({ isVotingActive, isHardStop });
   } catch (error) {
     res.status(500).json({ message: 'Server error: ' + error.message });
   }
@@ -208,13 +209,25 @@ app.post('/api/toggle-voting', async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized! Invalid password' });
     }
 
-    const { active } = req.body;
+    const { active, hardStop } = req.body;
     if (typeof active !== 'boolean') {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
     await updateSetting('isVotingActive', active);
-    res.json({ success: true, isVotingActive: active });
+    
+    // If hardStop is provided, update it. If starting voting, always clear hardStop.
+    if (active) {
+      await updateSetting('isHardStop', false);
+    } else if (typeof hardStop === 'boolean') {
+      await updateSetting('isHardStop', hardStop);
+    }
+
+    res.json({ 
+      success: true, 
+      isVotingActive: active, 
+      isHardStop: active ? false : (typeof hardStop === 'boolean' ? hardStop : await getSetting('isHardStop', false)) 
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error: ' + error.message });
   }
@@ -244,9 +257,10 @@ app.post('/api/set-voting-mode', async (req, res) => {
       return res.status(400).json({ message: 'Invalid value for started' });
     }
     await updateSetting('votingStarted', started);
-    // When stopping the voting session, also pause active voting
+    // When stopping the voting session, also pause active voting (Soft Pause)
     if (!started) {
       await updateSetting('isVotingActive', false);
+      await updateSetting('isHardStop', false);
     } else {
       // When starting the voting session, ensure active voting is unpaused
       await updateSetting('isVotingActive', true);

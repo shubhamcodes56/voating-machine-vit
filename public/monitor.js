@@ -152,7 +152,8 @@ async function toggleVoting(active) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 password: monitorPassword,
-                active: active
+                active: active,
+                hardStop: !active // Monitor always triggers a Hard Stop
             })
         });
 

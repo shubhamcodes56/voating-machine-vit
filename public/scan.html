@@ -615,6 +615,68 @@
 
   // AUTO-BOOT on load
   setTimeout(boot, 500);
+
+  // ── MONITORING HARD-STOP SYNC ──
+  // The scanner should also freeze if a hard-stop is triggered by Monitoring
+  async function checkHardStop() {
+    try {
+        const resp = await fetch('/api/voting-status');
+        const data = await resp.json();
+        if (!data.isVotingActive && data.isHardStop) {
+            showEmergencyOverlay();
+        } else {
+            removeEmergencyOverlay();
+        }
+    } catch(e) {}
+  }
+
+  function showEmergencyOverlay() {
+    if (document.getElementById('emergencyOverlay')) return;
+    
+    // Stop camera if running
+    if (rafId) cancelAnimationFrame(rafId);
+    if (stream) {
+        stream.getTracks().forEach(t => { t.stop(); t.enabled = false; });
+        stream = null;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.id = 'emergencyOverlay';
+    overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(15, 23, 42, 0.98);
+        backdrop-filter: blur(25px);
+        z-index: 99999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        color: white; font-family: system-ui, -apple-system, sans-serif; text-align: center; padding: 25px;
+    `;
+    overlay.innerHTML = `
+        <div style="background: rgba(244, 63, 94, 0.1); border: 2px solid rgba(244, 63, 94, 0.3); padding: 50px; border-radius: 40px; max-width: 600px; box-shadow: 0 40px 80px rgba(0,0,0,0.8);">
+            <div style="font-size: 7rem; margin-bottom: 2rem; filter: drop-shadow(0 0 25px rgba(244,63,94,0.5));">🚧</div>
+            <h1 style="font-size: 3.5rem; margin-bottom: 1.5rem; color: #F43F5E; font-weight: 900; letter-spacing: -2px; text-transform: uppercase;">System Frozen</h1>
+            <p style="font-size: 1.4rem; color: #94A3B8; margin-bottom: 2.5rem; line-height: 1.8; font-weight: 500;">
+                The monitoring center has initiated an <strong>Emergency Protocol</strong>.<br>Kiosk operations are suspended until further notice.
+            </p>
+            <div style="padding: 15px 35px; border-radius: 100px; background: rgba(244, 63, 94, 0.15); display: inline-flex; align-items: center; gap: 15px; border: 1px solid rgba(244, 63, 94, 0.2);">
+                <div style="width: 12px; height: 12px; background: #F43F5E; border-radius: 50%; box-shadow: 0 0 15px #F43F5E;"></div>
+                <span style="font-size: 1.1rem; color: #F43F5E; font-weight: 800; text-transform: uppercase; letter-spacing: 3px;">Halt Command Received</span>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  function removeEmergencyOverlay() {
+    const overlay = document.getElementById('emergencyOverlay');
+    if (overlay) {
+        overlay.remove();
+        // Force reload to restart camera safely
+        window.location.reload();
+    }
+  }
+
+  // Poll every 3 seconds for hard-stop
+  setInterval(checkHardStop, 3000);
 </script>
 
 </body>
