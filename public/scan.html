@@ -293,6 +293,22 @@
 
     const vid_str = normalize(text);
     log('✅ ' + vid_str + ' in ' + elapsed + 'ms', '#4ade80');
+    
+    // ── KIOSK AUTHORIZATION CHECK ──
+    if (localStorage.getItem('kioskAuthorized') !== 'true') {
+        setStatus('error', '🔒 Voting restricted to official Kiosks');
+        sidEl.textContent = 'Unauthorized Device';
+        sidEl.style.color = '#f87171'; // Red color for error
+        // Resume scanning after 3s
+        setTimeout(() => { 
+            sidEl.textContent = 'Scan Voter QR';
+            sidEl.style.color = '#fff';
+            setStatus('ready', 'Monitoring video feed...');
+            isScanning = true; 
+        }, 3000);
+        return;
+    }
+
     setStatus('ready', 'Code Verified! Closing Camera...');
     sidEl.textContent = 'Voter ID: ' + vid_str;
     success.classList.add('on');

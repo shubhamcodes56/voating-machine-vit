@@ -246,6 +246,34 @@ function filterVotes() {
     displayVotes(filtered);
 }
 
+// ============ AUTH KIOSK QR ============
+function generateKioskQR() {
+    const modal = document.getElementById('authModal');
+    const container = document.getElementById('authQrContainer');
+    
+    // Create the exact URL for the auth-kiosk page using the current monitor password
+    const baseUrl = window.location.origin;
+    const authUrl = `${baseUrl}/auth-kiosk.html?token=${encodeURIComponent(monitorPassword)}`;
+    
+    // Generate QR using the free API
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(authUrl)}&margin=10`;
+    
+    container.innerHTML = `<img src="${qrUrl}" alt="Kiosk Auth QR" style="border-radius: 12px; border: 4px solid #fff;">`;
+    modal.style.display = 'block';
+}
+
+function closeAuthModal() {
+    document.getElementById('authModal').style.display = 'none';
+}
+
+// Close modal if clicked outside
+window.addEventListener('click', (e) => {
+    const modal = document.getElementById('authModal');
+    if (e.target === modal) {
+        closeAuthModal();
+    }
+});
+
 // ============ LOGOUT ============
 function logout() {
     sessionStorage.removeItem('monitorPassword');

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authorizing Kiosk...</title>
+    <style>
+        body {
+            background:#04091A; color:#fff;
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height:100vh; display:flex; flex-direction:column;
+            align-items:center; justify-content:center; margin:0;
+        }
+        .box {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.09);
+            border-radius: 16px;
+            padding: 40px; text-align: center;
+            max-width: 400px; width: 90%;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid rgba(59, 130, 246, 0.2);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        h2 { margin: 0 0 10px; font-size: 1.5rem; }
+        p { color: #94a3b8; font-size: 0.95rem; line-height: 1.5; margin: 0; }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+    </style>
+</head>
+<body>
+    <div class="box" id="content">
+        <div class="spinner" id="spin"></div>
+        <h2 id="title">Authorizing Device</h2>
+        <p id="msg">Verifying credentials with the server...</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('token');
+            const title = document.getElementById('title');
+            const msg = document.getElementById('msg');
+            const spin = document.getElementById('spin');
+
+            if (!token) {
+                spin.style.display = 'none';
+                title.textContent = 'Authorization Failed';
+                title.className = 'error';
+                msg.textContent = 'No authorization token provided.';
+                return;
+            }
+
+            try {
+                // Verify against the monitor token endpoint
+                const resp = await fetch(`/api/verify-token?type=monitor&password=${encodeURIComponent(token)}`);
+                const data = await resp.json();
+
+                if (data.valid) {
+                    spin.style.display = 'none';
+                    title.textContent = 'Device Authorized! ✅';
+                    title.className = 'success';
+                    msg.innerHTML = 'This device is now an official voting kiosk.<br><br>Redirecting to scanner...';
+                    
+                    // Set the authorization flag
+                    localStorage.setItem('kioskAuthorized', 'true');
+                    
+                    setTimeout(() => {
+                        window.location.replace('/scan');
+                    }, 2000);
+                } else {
+                    spin.style.display = 'none';
+                    title.textContent = 'Authorization Failed ❌';
+                    title.className = 'error';
+                    msg.textContent = 'The token is invalid or has expired.';
+                }
+            } catch (err) {
+                spin.style.display = 'none';
+                title.textContent = 'Network Error';
+                title.className = 'error';
+                msg.textContent = 'Could not reach the server to verify authorization.';
+            }
+        });
+    </script>
+</body>
+</html>

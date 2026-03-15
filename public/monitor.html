@@ -49,6 +49,7 @@
                         <p>Status: <span id="votingStatusLabel" class="status-badge live">Live</span></p>
                     </div>
                     <div class="control-actions">
+                        <button id="authKioskBtn" class="action-btn auth" onclick="generateKioskQR()" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">📱 Authorize Kiosk</button>
                         <button id="stopVotingBtn" class="action-btn stop" onclick="toggleVoting(false)">🛑 Stop Voting</button>
                         <button id="startVotingBtn" class="action-btn start" onclick="toggleVoting(true)" style="display: none;">▶️ Start Voting</button>
                     </div>
@@ -113,6 +114,22 @@
                     <p>&copy; 2026 Voting Machine. All rights reserved. Designed for excellence.</p>
                 </div>
             </footer>
+        </div>
+    </div>
+
+    <!-- Auth Kiosk Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Authorize Kiosk Device</h2>
+                <span class="close-btn" onclick="closeAuthModal()">&times;</span>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <p style="color: #64748b; margin-bottom: 20px;">Scan this QR code using the tablet or laptop you want to use as the official voting kiosk.</p>
+                <div id="authQrContainer" style="display: flex; justify-content: center; margin-bottom: 20px;">
+                    <!-- QR Code will be injected here -->
+                </div>
+            </div>
         </div>
     </div>
 

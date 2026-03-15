@@ -20,6 +20,14 @@ let verifiedVoterId = '';
 
 // ============ AUTO-FILL FROM QR SCANNER (kiosk mode) ============
 document.addEventListener('DOMContentLoaded', () => {
+
+  // ── KIOSK AUTHORIZATION CHECK ──
+  // If this device is not authorized, block access to the voting machine completely.
+  if (localStorage.getItem('kioskAuthorized') !== 'true') {
+    showUnauthorizedOverlay();
+    return; // Stop further execution
+  }
+
   const params = new URLSearchParams(window.location.search);
   const vid = params.get('vid'); // URLSearchParams.get() already decodes — no decodeURIComponent needed
   if (vid) {
@@ -46,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check voting MODE first (is session open?) then status (is voting paused?)
   checkVotingMode();
   checkVotingStatus();
+
   loadCandidates();
 
   // Poll every 5 seconds for live updates
@@ -164,6 +173,33 @@ function removeVotingPausedMessage() {
     overlay.style.transform = 'scale(1.1)';
     setTimeout(() => overlay.remove(), 500);
   }
+}
+
+// ============ UNAUTHORIZED OVERLAY ============
+function showUnauthorizedOverlay() {
+  if (document.getElementById('unauthorizedOverlay')) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'unauthorizedOverlay';
+  overlay.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(4, 9, 26, 0.98);
+    backdrop-filter: blur(15px);
+    z-index: 10000;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: white; font-family: 'Outfit', sans-serif; text-align: center; padding: 20px;
+  `;
+  overlay.innerHTML = `
+    <div style="background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.2); padding: 50px; border-radius: 30px; max-width: 600px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+      <div style="font-size: 5rem; margin-bottom: 1.5rem;">🔒</div>
+      <h1 style="font-size: 2.5rem; margin-bottom: 1rem; color: #F43F5E; font-weight: 800; letter-spacing: -1px;">Unauthorized Device</h1>
+      <p style="font-size: 1.2rem; color: #94A3B8; margin-bottom: 2rem; line-height: 1.6;">
+        Voting is restricted to official authorized Kiosk devices only.<br>Please use the designated scanning station.
+      </p>
+      <button onclick="window.location.href='/scan'" style="background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: white; padding: 15px 30px; border-radius: 12px; font-weight: 600; font-size: 1.1rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 10px 20px rgba(59,130,246,0.3)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';">Go to Scanner</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
 }
 
 // ============ RIPPLE EFFECT HELPER ============
