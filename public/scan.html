@@ -201,12 +201,12 @@
   const manIn   = document.getElementById('manual-in');
 
   // ── MULTI-RESOLUTION & ZOOM CONFIG ────────────────────────────────────────
-  // We rotate through different strategies to catch all scenarios:
   const STRATEGIES = [
-    { w: 320, h: 240, zoom: false, label: 'Fast' },   // Standard
-    { w: 480, h: 360, zoom: false, label: 'Wide' },   // Better angle
-    { w: 320, h: 240, zoom: true,  label: 'Zoom' },   // Digital Zoom (2x) for distance
-    { w: 640, h: 480, zoom: false, label: 'Deep' }    // High Res
+    { w: 320, h: 240, zoom: 1,   pre: true,  label: 'Fast' },        // Standard base
+    { w: 480, h: 360, zoom: 1,   pre: false, label: 'Wide-Raw' },    // Wider angle, no preprocessing
+    { w: 320, h: 240, zoom: 2,   pre: true,  label: 'Zoom-2x' },     // 2x Digital Zoom
+    { w: 320, h: 240, zoom: 3.5, pre: false, label: 'Zoom-3.5x-Raw' },// Extreme distance (center crop)
+    { w: 600, h: 450, zoom: 1,   pre: true,  label: 'Deep' }         // High Res fallback
   ];
   let stratIdx = 0;
   let frameCount = 0;
@@ -395,19 +395,29 @@
       canvas.width  = strat.w;
       canvas.height = strat.h;
 
-      if (strat.zoom) {
-        // Digital Zoom: Crop middle 50% area
-        const cropW = vid.videoWidth * 0.5;
-        const cropH = vid.videoHeight * 0.5;
-        const sx = (vid.videoWidth - cropW) / 2;
-        const sy = (vid.videoHeight - cropH) / 2;
-        ctx.drawImage(vid, sx, sy, cropW, cropH, 0, 0, strat.w, strat.h);
+      if (strat.zoom > 1) {
+        // Digital Zoom: Crop center while preserving aspect ratio
+        const canvasRatio = strat.w / strat.h;
+        const cropW = vid.videoWidth / strat.zoom;
+        let actualCropW = cropW;
+        let actualCropH = cropW / canvasRatio;
+
+        if (actualCropH > vid.videoHeight) {
+          actualCropH = vid.videoHeight;
+          actualCropW = actualCropH * canvasRatio;
+        }
+
+        const sx = (vid.videoWidth - actualCropW) / 2;
+        const sy = (vid.videoHeight - actualCropH) / 2;
+        ctx.drawImage(vid, sx, sy, actualCropW, actualCropH, 0, 0, strat.w, strat.h);
       } else {
         ctx.drawImage(vid, 0, 0, strat.w, strat.h);
       }
 
       let img = ctx.getImageData(0, 0, strat.w, strat.h);
-      img = preprocess(img);
+      if (strat.pre) {
+        img = preprocess(img);
+      }
 
       const code = jsQR(img.data, strat.w, strat.h, { inversionAttempts: 'attemptBoth' });
       if (code) { onDetected(code.data); return; }
@@ -431,7 +441,7 @@
         log('✅ Native BarcodeDetector (fastest)', '#86efac');
       } catch(e) { log('⚠ Native unavailable', '#fbbf24'); }
     }
-    if (!hasNative) log('📦 jsQR + preprocess + 3-res', '#93c5fd');
+    if (!hasNative) log('📦 jsQR Advanced + 5-Strategy Loop', '#93c5fd');
 
     if (typeof jsQR === 'undefined') {
       setStatus('err', 'jsQR failed to load — check internet');
