@@ -58,7 +58,7 @@
           </div>
           <div class="pvb-actions">
             <a href="/qr.html" class="pvb-btn pvb-btn-primary" style="background: linear-gradient(135deg, #f43f5e, #dc2626);">📲 My QR Code</a>
-            <a href="/candidates.html" class="pvb-btn pvb-btn-secondary">👥 Our Leaders</a>
+            <a href="/scan" class="pvb-btn pvb-btn-secondary" style="border-color: #F43F5E; color: #F43F5E;">📷 Authorize Device</a>
           </div>
         </div>
       </div>
@@ -97,18 +97,20 @@
               <span>Scan QR Code</span>
             </button>
 
-            <div class="or-divider"><span>OR</span></div>
+            <div id="manualVoterIdContainer">
+              <div class="or-divider"><span>OR</span></div>
 
-            <div class="form-column">
-              <!-- Voter ID Input -->
-              <div class="input-group">
-                <label for="voterIdInput">Enter Your Voter ID Manually</label>
-                <input type="text" id="voterIdInput" placeholder="e.g., VID001" class="text-input">
+              <div class="form-column">
+                <!-- Voter ID Input -->
+                <div class="input-group">
+                  <label for="voterIdInput">Enter Your Voter ID Manually</label>
+                  <input type="text" id="voterIdInput" placeholder="e.g., VID001" class="text-input">
+                </div>
               </div>
-            </div>
 
-            <!-- Submit Button -->
-            <button id="verifyBtn" class="submit-btn">Verify Voter ID</button>
+              <!-- Submit Button -->
+              <button id="verifyBtn" class="submit-btn">Verify Voter ID</button>
+            </div>
 
             <!-- Success Message -->
             <div id="voterIdSuccessMessage" class="message success-message" style="display: none;">

@@ -31,8 +31,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (unauthorizedBanner) unauthorizedBanner.style.display = 'block';
     const votingHeader = document.getElementById('votingHeader');
     const votingMain = document.getElementById('votingMain');
+    const manualContainer = document.getElementById('manualVoterIdContainer');
+    const openScannerBtn = document.getElementById('openScannerBtn');
+    
     if (votingHeader) votingHeader.style.display = 'none';
     if (votingMain) votingMain.style.display = 'none';
+    if (manualContainer) manualContainer.style.display = 'none';
+    if (openScannerBtn) openScannerBtn.style.display = 'none';
     if (logoutBtn) logoutBtn.style.display = 'none';
   } else {
     // Authorized Kiosk — show logout button
@@ -101,16 +106,32 @@ async function checkVotingMode() {
     const votingMain    = document.getElementById('votingMain');
     const kioskNavLink  = document.getElementById('kioskNavLink');
 
+    const isKiosk = localStorage.getItem('kioskAuthorized') === 'true';
+
     if (votingStarted) {
-      // Voting is open — show full site
-      if (banner)       banner.style.display = 'none';
-      if (votingHeader) votingHeader.style.display = 'block';
-      if (votingMain)   votingMain.style.display = 'block';
-      if (kioskNavLink) kioskNavLink.style.display = 'block';
+      // Voting is open — show full site ONLY IF authorized
+      if (isKiosk) {
+        if (banner)       banner.style.display = 'none';
+        if (votingHeader) votingHeader.style.display = 'block';
+        if (votingMain)   votingMain.style.display = 'block';
+        if (kioskNavLink) kioskNavLink.style.display = 'block';
+      } else {
+        // Even if voting started, unauthorized devices stay on banner
+        if (banner)       document.getElementById('unauthorizedBanner').style.display = 'block';
+        if (votingHeader) votingHeader.style.display = 'none';
+        if (votingMain)   votingMain.style.display = 'none';
+        if (kioskNavLink) kioskNavLink.style.display = 'none';
+      }
     } else {
       // Pre-voting mode — hide voting interface, show banner, KEEP navbar
       if (banner)       banner.style.display = 'block';
-      if (votingHeader) votingHeader.style.display = 'block';
+      if (isKiosk) {
+        // Kiosks see "Cast Your Vote" header even in pre-voting
+        if (votingHeader) votingHeader.style.display = 'block';
+      } else {
+        // Personal devices don't see voting header at all
+        if (votingHeader) votingHeader.style.display = 'none';
+      }
       if (votingMain)   votingMain.style.display = 'none';
       if (kioskNavLink) kioskNavLink.style.display = 'none';
       
