@@ -310,6 +310,8 @@
   </div>
 
   <script>
+    const DATA_PASSWORD = '1234567898';
+
     const state = {
       records: [],
       filtered: []
@@ -402,9 +404,29 @@
       }
     }
 
+    function lockPage() {
+      document.body.innerHTML = `
+        <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0f172a;color:#fff;font-family:Outfit,sans-serif;padding:24px;text-align:center;">
+          <div style="max-width:520px;background:rgba(15,23,42,0.9);border:1px solid rgba(148,163,184,0.18);border-radius:28px;padding:32px;box-shadow:0 20px 50px rgba(0,0,0,0.35);">
+            <div style="font-size:3rem;margin-bottom:12px;">🔒</div>
+            <h1 style="margin:0 0 12px;font-size:2rem;">Password Required</h1>
+            <p style="margin:0;color:#94a3b8;line-height:1.7;">This page is protected. Enter the password to view the saved QR registrations.</p>
+          </div>
+        </div>
+      `;
+    }
+
     searchInput.addEventListener('input', renderTable);
     refreshBtn.addEventListener('click', loadRecords);
-    document.addEventListener('DOMContentLoaded', loadRecords);
+    document.addEventListener('DOMContentLoaded', () => {
+      const enteredPassword = prompt('Enter password to view saved QR data:');
+      if (enteredPassword !== DATA_PASSWORD) {
+        lockPage();
+        return;
+      }
+
+      loadRecords();
+    });
   </script>
 </body>
 
