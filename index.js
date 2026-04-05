@@ -82,6 +82,18 @@ const candidateSchema = new mongoose.Schema({
 });
 const Candidate = mongoose.model('Candidate', candidateSchema);
 
+const qrRegistrationSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  phone: { type: String, required: true, trim: true },
+  email: { type: String, required: true, trim: true, lowercase: true },
+  voterId: { type: String, required: true, unique: true, trim: true, uppercase: true },
+  qrData: { type: String, required: true },
+  savedAt: { type: String, default: () => new Date().toLocaleString() }
+}, {
+  timestamps: true
+});
+const QRRegistration = mongoose.model('QRRegistration', qrRegistrationSchema);
+
 // Initial Candidates Seeding
 async function seedCandidates() {
     try {
@@ -235,6 +247,91 @@ function normalizeVoterId(id) {
   if (/^\d+$/.test(s)) return 'VID' + s.padStart(4, '0');
   return s;
 }
+
+// API: Save QR registration details before generating the code
+app.post('/api/qr-registrations', async (req, res) => {
+  try {
+    const name = (req.body.name || '').trim();
+    const phone = (req.body.phone || '').trim();
+    const email = (req.body.email || '').trim().toLowerCase();
+    const voterId = normalizeVoterId(req.body.voterId);
+    const qrData = (req.body.qrData || voterId.replace(/[^0-9]/g, '').padStart(4, '0') || voterId).toString().trim();
+
+    if (!name) {
+      return res.status(400).json({ message: 'Full name is required' });
+    }
+
+    if (!phone || !/^\d{10}$/.test(phone)) {
+      return res.status(400).json({ message: 'A valid 10-digit phone number is required' });
+    }
+
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ message: 'A valid email address is required' });
+    }
+
+    if (!voterId) {
+      return res.status(400).json({ message: 'Voter ID is required' });
+    }
+
+    const savedRegistration = await QRRegistration.findOneAndUpdate(
+      { voterId },
+      {
+        name,
+        phone,
+        email,
+        voterId,
+        qrData,
+        savedAt: new Date().toLocaleString()
+      },
+      { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
+    );
+
+    res.status(201).json({
+      message: 'QR registration saved successfully!',
+      registration: {
+        id: savedRegistration._id,
+        name: savedRegistration.name,
+        phone: savedRegistration.phone,
+        email: savedRegistration.email,
+        voterId: savedRegistration.voterId,
+        qrData: savedRegistration.qrData,
+        savedAt: savedRegistration.savedAt
+      }
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: 'This Voter ID is already registered' });
+    }
+    console.error('QR registration error:', error);
+    res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+});
+
+// API: Get all QR registrations
+app.get('/api/qr-registrations', async (req, res) => {
+  try {
+    const dbRegistrations = await QRRegistration.find().sort({ updatedAt: -1 });
+
+    const registrations = dbRegistrations.map(item => ({
+      id: item._id,
+      name: item.name,
+      phone: item.phone,
+      email: item.email,
+      voterId: item.voterId,
+      qrData: item.qrData,
+      savedAt: item.savedAt,
+      timestamp: item.createdAt
+    }));
+
+    res.json({
+      totalRegistrations: registrations.length,
+      registrations
+    });
+  } catch (error) {
+    console.error('Get QR registrations error:', error);
+    res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+});
 
 // API: Verify Voter ID
 app.post('/api/verify-voter-id', async (req, res) => {

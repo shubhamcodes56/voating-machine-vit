@@ -177,7 +177,7 @@ body::after {
     padding: 10px 18px;
     gap: 8px;
   }
-  
+
   .navbar.shrunk .nav-logo {
     padding: 4px 10px;
   }
@@ -360,7 +360,7 @@ body::after {
   .header {
     padding: 100px 20px 30px;
   }
-  
+
   .title {
     font-size: 2.25rem;
   }
@@ -479,7 +479,7 @@ html {
     padding: 32px 24px;
     border-radius: 20px;
   }
-  
+
   .form-container h2 {
     font-size: 1.25rem;
     margin-bottom: 24px;
@@ -1223,12 +1223,40 @@ html {
   padding-top: 30px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
 }
 
 .footer-bottom p {
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.4);
   letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.footer-data-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2563eb, #38bdf8);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-decoration: none;
+  letter-spacing: 0.08em;
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.footer-data-btn:hover {
+  transform: translateY(-1px) scale(1.04);
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.3);
+  filter: brightness(1.05);
 }
 
 @media (max-width: 768px) {
@@ -1237,7 +1265,7 @@ html {
     gap: 30px;
     text-align: center;
   }
-  
+
   .footer-column ul li a:hover {
     padding-left: 0;
     transform: scale(1.05);
@@ -1437,4 +1465,4 @@ html {
   .pvb-inner { flex-direction: column; text-align: center; }
   .pvb-actions { justify-content: center; }
 }
-
+

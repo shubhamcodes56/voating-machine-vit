@@ -4,26 +4,46 @@
 
 let qrInstance = null;
 
-function generateQR() {
+async function generateQR() {
   const name    = document.getElementById('studentName').value.trim();
   const phone   = document.getElementById('studentPhone').value.trim();
+  const email   = document.getElementById('studentEmail').value.trim();
   const voterId = document.getElementById('studentVoterId').value.trim().toUpperCase();
 
   if (!name)    { showFormError('Please enter your full name.'); return; }
   if (!phone || !/^\d{10}$/.test(phone)) { showFormError('Please enter a valid 10-digit phone number.'); return; }
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) { showFormError('Please enter a valid email address.'); return; }
   if (!voterId) { showFormError('Please enter your Voter ID.'); return; }
 
   document.getElementById('formError').style.display = 'none';
-
-  const container = document.getElementById('qrCanvas');
-  container.innerHTML = '';
-  qrInstance = null;
 
   try {
     // ULTRA-SIMPLE: encode ONLY the numeric part, e.g. "0001" from "VID0001" or "5000" from "VID5000"
     // Up to 4 digits = QR Version 1 (21x21 grid) = MAXIMUM square size = EASIEST to scan from distance
     // ECC Level L = least error-correction overhead = biggest data squares
     const numericPart = voterId.replace(/[^0-9]/g, '').padStart(4, '0') || voterId;
+
+    const response = await fetch('/api/qr-registrations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        phone,
+        email,
+        voterId,
+        qrData: numericPart
+      })
+    });
+
+    const responseData = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(responseData.message || responseData.error || 'Failed to save registration');
+    }
+
+    const container = document.getElementById('qrCanvas');
+    container.innerHTML = '';
+    qrInstance = null;
 
     qrInstance = new QRCode(container, {
       text:         numericPart, // e.g. "001" — ultra short!
@@ -40,6 +60,7 @@ function generateQR() {
 
   document.getElementById('displayName').textContent    = name;
   document.getElementById('displayPhone').textContent   = phone;
+  document.getElementById('displayEmail').textContent   = email;
   document.getElementById('displayVoterId').textContent = voterId;
 
   const rc = document.getElementById('qrResultCard');
@@ -128,7 +149,7 @@ function downloadQR() {
 
 // ============ RESET ============
 function resetForm() {
-  ['studentName', 'studentPhone', 'studentVoterId'].forEach(id => {
+  ['studentName', 'studentPhone', 'studentEmail', 'studentVoterId'].forEach(id => {
     document.getElementById(id).value = '';
   });
   document.getElementById('formError').style.display    = 'none';
@@ -145,7 +166,7 @@ function showFormError(msg) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  ['studentName', 'studentPhone', 'studentVoterId'].forEach(id => {
+  ['studentName', 'studentPhone', 'studentEmail', 'studentVoterId'].forEach(id => {
     document.getElementById(id).addEventListener('keypress', e => {
       if (e.key === 'Enter') generateQR();
     });

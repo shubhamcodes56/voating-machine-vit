@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Data - Voting Machine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.35), transparent 32%),
+        radial-gradient(circle at top right, rgba(14, 165, 233, 0.18), transparent 28%),
+        linear-gradient(180deg, #08111f 0%, #0f172a 100%);
+      min-height: 100vh;
+    }
+
+    .records-main {
+      padding: 120px 20px 60px;
+    }
+
+    .records-hero {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .records-hero h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(2.2rem, 4vw, 4rem);
+      font-weight: 800;
+      color: #f8fafc;
+      margin: 0;
+      letter-spacing: -0.04em;
+    }
+
+    .records-hero p {
+      color: #94a3b8;
+      max-width: 760px;
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .records-toolbar,
+    .records-table,
+    .records-stats {
+      margin-top: 18px;
+    }
+
+    .records-toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .records-search {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      background: rgba(15, 23, 42, 0.72);
+      color: #e2e8f0;
+      outline: none;
+      font-size: 0.98rem;
+    }
+
+    .records-search::placeholder {
+      color: #64748b;
+    }
+
+    .records-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 16px;
+      border: 0;
+      background: linear-gradient(135deg, #2563eb, #38bdf8);
+      color: white;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .records-btn.secondary {
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+    }
+
+    .records-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .stat-card {
+      padding: 18px;
+      border-radius: 24px;
+      background: rgba(15, 23, 42, 0.68);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      backdrop-filter: blur(18px);
+    }
+
+    .stat-label {
+      color: #94a3b8;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      color: #f8fafc;
+      font-size: 1.8rem;
+      font-weight: 800;
+    }
+
+    .stat-note {
+      color: #64748b;
+      margin-top: 6px;
+      font-size: 0.92rem;
+    }
+
+    .records-table {
+      overflow: hidden;
+      border-radius: 28px;
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      backdrop-filter: blur(18px);
+    }
+
+    .records-table-head {
+      padding: 20px 22px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .records-table-head h2 {
+      margin: 0;
+      color: #f8fafc;
+      font-size: 1.4rem;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #cbd5e1;
+      background: rgba(37, 99, 235, 0.12);
+      border: 1px solid rgba(37, 99, 235, 0.28);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      padding: 18px 22px 22px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: #e2e8f0;
+      min-width: 980px;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 14px 12px;
+      color: #94a3b8;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    tbody td {
+      padding: 14px 12px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      vertical-align: top;
+    }
+
+    tbody tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.22);
+      color: #bfdbfe;
+      font-size: 0.88rem;
+      word-break: break-word;
+    }
+
+    .muted {
+      color: #94a3b8;
+    }
+
+    .empty-state {
+      padding: 32px 16px;
+      text-align: center;
+      color: #94a3b8;
+    }
+
+    .error-state {
+      color: #fca5a5;
+    }
+
+    @media (max-width: 900px) {
+      .records-toolbar,
+      .records-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .records-table-head {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <nav class="navbar">
+      <div class="nav-logo">
+        <img src="data:image/webp;base64,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" alt="Logo" class="logo">
+        <span class="nav-title">Voting Machine</span>
+      </div>
+      <div class="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/qr.html" class="nav-link">My QR</a>
+        <a href="/qr-records.html" class="nav-link active">QR Data</a>
+        <a href="/candidates.html" class="nav-link">Our Leaders</a>
+      </div>
+    </nav>
+
+    <main class="records-main">
+      <section class="records-hero">
+        <div class="qr-hero-badge">📋 Hosted Data</div>
+        <h1>Saved QR Registrations</h1>
+        <p>This page reads directly from MongoDB and shows the student data saved when a QR code is generated.</p>
+      </section>
+
+      <section class="records-toolbar glass-card">
+        <input id="searchInput" class="records-search" type="search" placeholder="Search by name, phone, email, or voter ID">
+        <button id="refreshBtn" class="records-btn" type="button">🔄 Refresh</button>
+        <a href="/qr.html" class="records-btn secondary">↩ Back to QR</a>
+      </section>
+
+      <section class="records-stats">
+        <div class="stat-card">
+          <div class="stat-label">Total Records</div>
+          <div class="stat-value" id="totalCount">0</div>
+          <div class="stat-note">All saved QR registrations</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Visible Records</div>
+          <div class="stat-value" id="visibleCount">0</div>
+          <div class="stat-note">Matches your search</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Latest Save</div>
+          <div class="stat-value" id="latestStamp">—</div>
+          <div class="stat-note">Most recent registration time</div>
+        </div>
+      </section>
+
+      <section class="records-table">
+        <div class="records-table-head">
+          <h2>Registration Table</h2>
+          <div class="status-pill" id="statusPill">⏳ Loading records from MongoDB...</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Voter ID</th>
+                <th>QR Data</th>
+                <th>Saved At</th>
+              </tr>
+            </thead>
+            <tbody id="recordsBody">
+              <tr>
+                <td colspan="6">
+                  <div class="empty-state">Loading records...</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const state = {
+      records: [],
+      filtered: []
+    };
+
+    const searchInput = document.getElementById('searchInput');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const recordsBody = document.getElementById('recordsBody');
+    const statusPill = document.getElementById('statusPill');
+    const totalCount = document.getElementById('totalCount');
+    const visibleCount = document.getElementById('visibleCount');
+    const latestStamp = document.getElementById('latestStamp');
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderStats() {
+      totalCount.textContent = state.records.length;
+      visibleCount.textContent = state.filtered.length;
+      latestStamp.textContent = state.records[0]?.savedAt || '—';
+    }
+
+    function renderTable() {
+      const query = searchInput.value.trim().toLowerCase();
+      state.filtered = state.records.filter(record => {
+        const haystack = [record.name, record.phone, record.email, record.voterId, record.qrData, record.savedAt]
+          .join(' ')
+          .toLowerCase();
+        return !query || haystack.includes(query);
+      });
+
+      renderStats();
+
+      if (!state.filtered.length) {
+        recordsBody.innerHTML = `
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">No saved registrations found for this search.</div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      recordsBody.innerHTML = state.filtered.map(record => `
+        <tr>
+          <td><strong>${escapeHtml(record.name)}</strong></td>
+          <td>${escapeHtml(record.phone)}</td>
+          <td>${escapeHtml(record.email)}</td>
+          <td><span class="badge">${escapeHtml(record.voterId)}</span></td>
+          <td><span class="badge">${escapeHtml(record.qrData)}</span></td>
+          <td class="muted">${escapeHtml(record.savedAt)}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadRecords() {
+      statusPill.textContent = '⏳ Loading records from MongoDB...';
+
+      try {
+        const response = await fetch('/api/qr-registrations');
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || data.error || 'Failed to load records');
+        }
+
+        state.records = Array.isArray(data.registrations) ? data.registrations : [];
+        state.filtered = state.records.slice();
+        statusPill.textContent = `✅ Live data loaded (${state.records.length} records)`;
+        renderTable();
+      } catch (error) {
+        statusPill.textContent = '❌ Could not load records';
+        recordsBody.innerHTML = `
+          <tr>
+            <td colspan="6">
+              <div class="empty-state error-state">${escapeHtml(error.message)}</div>
+            </td>
+          </tr>
+        `;
+        totalCount.textContent = '0';
+        visibleCount.textContent = '0';
+        latestStamp.textContent = '—';
+      }
+    }
+
+    searchInput.addEventListener('input', renderTable);
+    refreshBtn.addEventListener('click', loadRecords);
+    document.addEventListener('DOMContentLoaded', loadRecords);
+  </script>
+</body>
+
+</html>

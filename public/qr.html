@@ -29,6 +29,7 @@
             <div class="nav-links">
                 <a href="/" class="nav-link">Home</a>
                 <a href="/qr.html" class="nav-link active">My QR</a>
+                <a href="/qr-records.html" class="nav-link">QR Data</a>
                 <a href="#" class="nav-link" onclick="showAdminPanel(); return false;">Admin</a>
                 <a href="#" class="nav-link" onclick="showMonitorPanel(); return false;">Monitoring</a>
             </div>
@@ -73,6 +74,15 @@
                         </div>
 
                         <div class="input-group">
+                            <label class="input-label" for="studentEmail">Email Address</label>
+                            <div class="input-wrapper">
+                                <span class="input-icon">✉️</span>
+                                <input type="email" id="studentEmail" class="qr-input" placeholder="e.g. student@example.com"
+                                    autocomplete="email">
+                            </div>
+                        </div>
+
+                        <div class="input-group">
                             <label class="input-label" for="studentVoterId">Voter ID</label>
                             <div class="input-wrapper">
                                 <span class="input-icon">🪪</span>
@@ -105,12 +115,15 @@
                                 id="displayName">—</span></div>
                         <div class="badge-item"><span class="badge-label">Phone</span><span class="badge-value"
                                 id="displayPhone">—</span></div>
+                        <div class="badge-item"><span class="badge-label">Email</span><span class="badge-value"
+                            id="displayEmail">—</span></div>
                         <div class="badge-item"><span class="badge-label">Voter ID</span><span class="badge-value"
                                 id="displayVoterId">—</span></div>
                     </div>
                     <div class="qr-actions">
                         <button class="qr-download-btn" onclick="downloadQR()">⬇️ Download QR</button>
                         <button class="qr-reset-btn" onclick="resetForm()">🔄 Generate New</button>
+                        <a href="/qr-records.html" class="qr-download-btn" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">📋 View Saved Data</a>
                     </div>
                 </div>
 
@@ -121,7 +134,7 @@
                 <div class="info-card glass-card">
                     <span class="info-icon">🔒</span>
                     <h3>Secure & Private</h3>
-                    <p>Your QR code is generated entirely on your device. No data is sent to any server.</p>
+                    <p>Your QR code is generated on your device, and your registration details are stored in MongoDB for later review.</p>
                 </div>
                 <div class="info-card glass-card">
                     <span class="info-icon">🌟</span>
@@ -159,6 +172,7 @@
                     <ul>
                         <li><a href="/">Home</a></li>
                         <li><a href="/qr.html">Generate QR</a></li>
+                        <li><a href="/qr-records.html">QR Data</a></li>
                         <li><a href="/admin.html">Admin Dashboard</a></li>
                         <li><a href="#">FAQ</a></li>
                     </ul>
@@ -175,6 +189,7 @@
             </div>
             <div class="footer-bottom">
                 <p>&copy; 2026 Voting Machine. All rights reserved. Designed for excellence.</p>
+                <a href="/qr-records.html" class="footer-data-btn" title="View saved QR data" aria-label="View saved QR data">D</a>
             </div>
         </footer>
     </div>
